@@ -41,15 +41,6 @@
 		editorState.setTotalLines(view.state.doc.lines);
 	}
 
-	// Update scroll percentage
-	function updateScrollPercent(view: EditorView) {
-		const scrollDOM = view.scrollDOM;
-		const scrollTop = scrollDOM.scrollTop;
-		const scrollHeight = scrollDOM.scrollHeight - scrollDOM.clientHeight;
-		const percent = scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
-		editorState.setScrollPercent(percent);
-	}
-
 	// Vim mode change handler reference for cleanup
 	let vimModeChangeHandler: ((event: { mode: string }) => void) | null = null;
 
@@ -88,13 +79,6 @@
 					}
 					if (update.selectionSet || update.docChanged) {
 						updateCursorPosition(update.view);
-					}
-				}),
-				// Scroll listener
-				EditorView.domEventHandlers({
-					scroll: (_, view) => {
-						updateScrollPercent(view);
-						return false;
 					}
 				})
 			]

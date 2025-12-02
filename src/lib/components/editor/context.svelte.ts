@@ -27,8 +27,10 @@ export class EditorState {
 	cursorCol = $state(1);
 	totalLines = $state(1);
 
-	// Scroll position (0-100)
-	scrollPercent = $state(0);
+	// Cursor position as percentage through document (0-100)
+	readonly scrollPercent = $derived(
+		this.totalLines <= 1 ? 0 : Math.round(((this.cursorLine - 1) / (this.totalLines - 1)) * 100)
+	);
 
 	readonly wordCount = $derived(
 		this.content.trim() === '' ? 0 : this.content.trim().split(/\s+/).length
@@ -51,10 +53,6 @@ export class EditorState {
 
 	setTotalLines(lines: number) {
 		this.totalLines = lines;
-	}
-
-	setScrollPercent(percent: number) {
-		this.scrollPercent = percent;
 	}
 }
 
