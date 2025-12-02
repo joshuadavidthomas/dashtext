@@ -24,15 +24,6 @@ export class EditorState {
 
 	// Editor (CodeMirror) focus state
 	isFocused = $state(false);
-	
-	// Container wrapper focus state (when tabbed to but not editing)
-	containerFocused = $state(false);
-	
-	// Tracks if user exited via Escape (shows border indicator)
-	escapedOut = $state(false);
-	
-	// Show border when container is focused OR just escaped
-	readonly showBorder = $derived(this.containerFocused || this.escapedOut);
 
 	// Cursor position
 	cursorLine = $state(1);
@@ -69,19 +60,6 @@ export class EditorState {
 
 	setFocused(focused: boolean) {
 		this.isFocused = focused;
-		// Clear escapedOut and containerFocused when editor regains focus
-		if (focused) {
-			this.escapedOut = false;
-			this.containerFocused = false;
-		}
-	}
-
-	setContainerFocused(focused: boolean) {
-		this.containerFocused = focused;
-	}
-
-	setEscapedOut(escaped: boolean) {
-		this.escapedOut = escaped;
 	}
 }
 

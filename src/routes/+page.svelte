@@ -4,14 +4,12 @@
 
 	// Create editor context at page level
 	const editorState = createEditorContext();
-
-	let vimMode = $state(false);
 </script>
 
 <MenuBar />
 <Sidebar />
 <main data-layout="main">
-	<Editor {vimMode} />
+	<Editor />
 </main>
 <Aside />
-<FooterBar {vimMode} onVimModeChange={(v) => (vimMode = v)} />
+<FooterBar />

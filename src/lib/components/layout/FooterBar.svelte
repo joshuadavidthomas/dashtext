@@ -1,13 +1,5 @@
 <script lang="ts">
-	import { Toggle } from '$lib/components/ui/toggle';
 	import { getEditorContext, type VimModeType } from '$lib/components/editor';
-
-	interface Props {
-		vimMode: boolean;
-		onVimModeChange: (enabled: boolean) => void;
-	}
-
-	let { vimMode, onVimModeChange }: Props = $props();
 
 	const editor = getEditorContext();
 
@@ -58,28 +50,6 @@
 			</div>
 		{/if}
 
-		<!-- VIM toggle -->
-		<Toggle
-			pressed={vimMode}
-			onPressedChange={(pressed) => onVimModeChange(pressed)}
-			size="sm"
-			class="ml-2 h-5 rounded-sm border-0 px-1.5 text-[10px] {vimMode
-				? 'bg-[var(--cm-statusline-section-bg)] text-[var(--cm-foreground)] hover:bg-[var(--cm-statusline-section-bg)]/80'
-				: 'bg-transparent text-[var(--cm-comment)] hover:bg-[var(--cm-statusline-section-bg)] hover:text-[var(--cm-foreground)]'}"
-		>
-			VIM
-		</Toggle>
-
-		<!-- Focus hint -->
-		{#if editor.isFocused}
-			<span class="ml-3 text-[var(--cm-comment)]">
-				Esc to exit
-			</span>
-		{:else if editor.showBorder}
-			<span class="ml-3 text-[var(--cm-comment)]">
-				Type to edit
-			</span>
-		{/if}
 	</div>
 
 	<!-- Right section: Stats and position -->

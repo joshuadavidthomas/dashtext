@@ -1,19 +1,10 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { keymap, EditorView, drawSelection } from '@codemirror/view';
 import { vim } from '@replit/codemirror-vim';
-import { Compartment, type Extension } from '@codemirror/state';
+import { type Extension } from '@codemirror/state';
 import { tokyoNightTheme } from './codemirror-theme';
-
-/**
- * Compartment for reconfigurable vim extension
- */
-export const vimCompartment = new Compartment();
-
-export interface ExtensionOptions {
-	vimMode?: boolean;
-}
 
 /**
  * Create the base extensions that don't change
@@ -29,8 +20,8 @@ export function createBaseExtensions(): Extension[] {
 		// History for undo/redo
 		history(),
 
-		// Keymaps - indentWithTab captures Tab to insert indentation instead of moving focus
-		keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+		// Keymaps
+		keymap.of([...defaultKeymap, ...historyKeymap]),
 
 		// Line wrapping for prose
 		EditorView.lineWrapping,
@@ -46,14 +37,12 @@ export function createBaseExtensions(): Extension[] {
 }
 
 /**
- * Create the full extension set with configurable options
+ * Create the full extension set (always includes vim mode)
  */
-export function createExtensions(options: ExtensionOptions = {}): Extension[] {
-	const { vimMode = false } = options;
-
+export function createExtensions(): Extension[] {
 	return [
-		// Vim mode (compartmentalized for toggling)
-		vimCompartment.of(vimMode ? vim() : []),
+		// Vim mode (always enabled)
+		vim(),
 
 		// Base extensions (includes theme)
 		...createBaseExtensions()
