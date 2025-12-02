@@ -9,11 +9,12 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "moduleResolution": "bundler"
-  },
-  "paths": {
-    "$lib": ["./src/lib"],
-    "$lib/*": ["./src/lib/*"]
+    "moduleResolution": "bundler",
+    "plugins": [
+      {
+        "name": "typescript-svelte-plugin"
+      }
+    ]
   }
   // Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
   // except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
