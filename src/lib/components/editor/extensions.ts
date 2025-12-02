@@ -1,6 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { keymap, EditorView, drawSelection } from '@codemirror/view';
 import { vim } from '@replit/codemirror-vim';
 import { Compartment, type Extension } from '@codemirror/state';
@@ -29,8 +29,8 @@ export function createBaseExtensions(): Extension[] {
 		// History for undo/redo
 		history(),
 
-		// Keymaps
-		keymap.of([...defaultKeymap, ...historyKeymap]),
+		// Keymaps - indentWithTab captures Tab to insert indentation instead of moving focus
+		keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
 
 		// Line wrapping for prose
 		EditorView.lineWrapping,

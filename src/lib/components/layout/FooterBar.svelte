@@ -69,6 +69,17 @@
 		>
 			VIM
 		</Toggle>
+
+		<!-- Focus hint -->
+		{#if editor.isFocused}
+			<span class="ml-3 text-[var(--cm-comment)]">
+				Esc to exit
+			</span>
+		{:else if editor.showBorder}
+			<span class="ml-3 text-[var(--cm-comment)]">
+				Type to edit
+			</span>
+		{/if}
 	</div>
 
 	<!-- Right section: Stats and position -->
