@@ -67,7 +67,7 @@
 		class={cn(
 			"bg-sidebar text-sidebar-foreground hidden flex-col md:flex",
 			"transition-[width] duration-(--sidebar-duration) ease-linear",
-			"group-data-[collapsible=offcanvas]:w-0 group-data-[collapsible=offcanvas]:overflow-hidden",
+			"data-[collapsible=offcanvas]:w-0 data-[collapsible=offcanvas]:overflow-hidden",
 			"w-(--sidebar-width)",
 			side === "left" ? "border-r" : "border-l",
 			className
