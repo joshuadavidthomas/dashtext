@@ -1,3 +1,5 @@
+import { createContext } from 'svelte';
+
 /**
  * Raw draft data shape from Tauri API
  */
@@ -7,6 +9,16 @@ export type DraftData = {
 	created_at: string;
 	modified_at: string;
 };
+
+/**
+ * Current draft context for Editor and other components
+ */
+export interface CurrentDraftContext {
+	draft: () => Draft | null;
+	updateContent: (content: string) => void;
+}
+
+export const [getCurrentDraft, setCurrentDraft] = createContext<CurrentDraftContext>();
 
 /**
  * Draft - reactive draft model with derived presentation properties
