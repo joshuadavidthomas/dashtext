@@ -4,6 +4,7 @@
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	const appWindow = getCurrentWindow();
 	const sidebar = useSidebar();
@@ -32,16 +33,17 @@
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					{#snippet child({ props })}
-						<button
+						<Button
 							{...props}
+							variant="toolbar"
+							size="icon-sm"
 							onclick={() => sidebar.toggle()}
-							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
-							class:text-[var(--cm-accent)]={sidebar.open}
 							aria-label="Toggle sidebar"
 							aria-pressed={sidebar.open}
+							class={sidebar.open ? 'text-[var(--cm-accent)]' : ''}
 						>
 							<PanelLeft class="size-3.5" />
-						</button>
+						</Button>
 					{/snippet}
 				</Tooltip.Trigger>
 				<Tooltip.Content side="bottom">Toggle sidebar (Ctrl+B)</Tooltip.Content>
@@ -50,14 +52,15 @@
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					{#snippet child({ props })}
-						<button
+						<Button
 							{...props}
+							variant="toolbar"
+							size="icon-sm"
 							onclick={() => draftsState.newDraft()}
-							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							aria-label="New draft"
 						>
 							<Plus class="size-3.5" />
-						</button>
+						</Button>
 					{/snippet}
 				</Tooltip.Trigger>
 				<Tooltip.Content side="bottom">New draft (Ctrl+N)</Tooltip.Content>
@@ -68,14 +71,15 @@
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					{#snippet child({ props })}
-						<button
+						<Button
 							{...props}
+							variant="toolbar"
+							size="icon-sm"
 							onclick={minimize}
-							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							aria-label="Minimize"
 						>
 							<Minus class="size-3.5" />
-						</button>
+						</Button>
 					{/snippet}
 				</Tooltip.Trigger>
 				<Tooltip.Content side="bottom">Minimize</Tooltip.Content>
@@ -84,14 +88,15 @@
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					{#snippet child({ props })}
-						<button
+						<Button
 							{...props}
+							variant="toolbar"
+							size="icon-sm"
 							onclick={toggleMaximize}
-							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							aria-label="Maximize"
 						>
 							<Square class="size-3" />
-						</button>
+						</Button>
 					{/snippet}
 				</Tooltip.Trigger>
 				<Tooltip.Content side="bottom">Maximize</Tooltip.Content>
@@ -100,14 +105,15 @@
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					{#snippet child({ props })}
-						<button
+						<Button
 							{...props}
+							variant="toolbar-destructive"
+							size="icon-sm"
 							onclick={close}
-							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-error)]"
 							aria-label="Close"
 						>
 							<X class="size-3.5" />
-						</button>
+						</Button>
 					{/snippet}
 				</Tooltip.Trigger>
 				<Tooltip.Content side="bottom">Close</Tooltip.Content>
