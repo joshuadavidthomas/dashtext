@@ -22,11 +22,24 @@
           <div class="p-4 text-center text-sm text-destructive">{draftsState.error}</div>
         {:else}
           {#each draftsState.drafts as draft (draft.id)}
-            <SidebarItem
-              {draft}
-              isActive={draftsState.currentDraft?.id === draft.id}
+            <button
               onclick={() => draftsState.selectDraft(draft.id)}
-            />
+              class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors hover:bg-sidebar-accent"
+              class:bg-sidebar-accent={draftsState.currentDraft?.id === draft.id}>
+              <div class="truncate text-sm font-medium text-sidebar-foreground">
+                {draft.title}
+              </div>
+              {#each draft.previewLines as line}
+                <div class="truncate text-xs text-sidebar-foreground/60">
+                  {line}
+                </div>
+              {/each}
+              {#if draft.content.trim()}
+                <div class="text-xs text-sidebar-foreground/40">
+                  {draft.formattedModifiedAt}
+                </div>
+              {/if}
+            </button>
           {/each}
         {/if}
       </Sidebar.Content>
