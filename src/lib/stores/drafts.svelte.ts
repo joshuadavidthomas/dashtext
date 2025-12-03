@@ -1,7 +1,7 @@
 import { createContext } from 'svelte';
 import { useDebounce } from 'runed';
+import { replaceState } from '$app/navigation';
 import { createDraft, saveDraft } from '$lib/api';
-import { goto, invalidateAll } from '$app/navigation';
 
 /**
  * Raw draft data shape from Tauri API
@@ -57,51 +57,65 @@ export class Draft {
 }
 
 /**
- * DraftState - manages current draft and autosave
- * Set in context by route pages, consumed by Editor and other components
+ * DraftsState - unified state for all drafts and current draft with autosave
+ * Set in context by root layout, consumed by Editor, Sidebar, and route pages
  */
-export class DraftState {
-	draft = $state<Draft | null>(null);
-	private draftId: number | null;
+export class DraftsState {
+	drafts = $state<Draft[]>([]);
+	currentDraft = $state<Draft | null>(null);
+
 	private pendingContent: string | null = null;
 	private debouncedSave: ReturnType<typeof useDebounce>;
 
-	constructor(draft: Draft | null = null) {
-		this.draft = draft;
-		this.draftId = draft?.id ?? null;
+	constructor(initialDrafts: Draft[]) {
+		this.drafts = initialDrafts;
 		this.debouncedSave = useDebounce(() => this.performSave(), () => 500);
 	}
 
+	setCurrentDraft(draft: Draft | null) {
+		if (draft) {
+			// Use existing draft from our array to maintain object identity for reactivity
+			this.currentDraft = this.drafts.find((d) => d.id === draft.id) ?? draft;
+		} else {
+			this.currentDraft = null;
+		}
+	}
+
 	updateContent(content: string) {
-		if (this.draft) {
-			this.draft.content = content;
+		if (this.currentDraft) {
+			this.currentDraft.content = content;
 		}
 		this.pendingContent = content;
 		this.debouncedSave();
 	}
 
+	flushPendingSave() {
+		this.debouncedSave.runScheduledNow();
+	}
+
 	private async performSave() {
 		if (this.pendingContent === null) return;
 
-		if (this.draftId === null && this.pendingContent.trim()) {
-			// Create new draft on first save
+		if (this.currentDraft === null && this.pendingContent.trim()) {
+			// NEW DRAFT: create in DB, update local state, replaceState URL
 			const newDraft = await createDraft();
-			this.draftId = newDraft.id;
-			this.draft = newDraft;
-			this.draft.content = this.pendingContent;
-			await saveDraft(this.draftId, this.pendingContent);
-			await invalidateAll();
-			goto(`/drafts/${this.draftId}`, { replaceState: true });
-		} else if (this.draftId !== null) {
-			await saveDraft(this.draftId, this.pendingContent);
+			newDraft.content = this.pendingContent;
+			await saveDraft(newDraft.id, this.pendingContent);
+
+			// Update local state (triggers reactive updates)
+			this.drafts = [newDraft, ...this.drafts];
+			this.currentDraft = newDraft;
+
+			// Update URL without navigation (preserves focus)
+			replaceState(`/drafts/${newDraft.id}`, {});
+		} else if (this.currentDraft !== null) {
+			// EXISTING DRAFT: just save
+			const updated = await saveDraft(this.currentDraft.id, this.pendingContent);
+			this.currentDraft.modified_at = updated.modified_at;
 		}
 
 		this.pendingContent = null;
 	}
-
-	flushPendingSave() {
-		this.debouncedSave.runScheduledNow();
-	}
 }
 
-export const [getDraftState, setDraftState] = createContext<DraftState>();
+export const [getDraftsState, setDraftsState] = createContext<DraftsState>();

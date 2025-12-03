@@ -4,15 +4,16 @@
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { deleteDraft } from '$lib/api';
-	import { page } from '$app/state';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { getDraftsState } from '$lib/stores/drafts.svelte';
+	import { goto } from '$app/navigation';
 	import { Minus, PanelLeft, Plus, Square, Trash2, X } from '@lucide/svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 	const appWindow = getCurrentWindow();
 	const sidebar = useSidebar();
+	const draftsState = getDraftsState();
 
-	const currentDraftId = $derived(page.params.id ? Number(page.params.id) : null);
+	const currentDraftId = $derived(draftsState.currentDraft?.id ?? null);
 
 	async function minimize() {
 		await appWindow.minimize();
@@ -33,8 +34,16 @@
 	async function handleDelete() {
 		if (!currentDraftId) return;
 		await deleteDraft(currentDraftId);
-		await invalidateAll();
-		goto('/drafts');
+
+		// Update local state
+		draftsState.drafts = draftsState.drafts.filter((d) => d.id !== currentDraftId);
+
+		// Navigate to another draft or new
+		if (draftsState.drafts.length > 0) {
+			goto(`/drafts/${draftsState.drafts[0].id}`);
+		} else {
+			goto('/drafts/new');
+		}
 	}
 </script>
 

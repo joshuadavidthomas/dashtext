@@ -4,13 +4,16 @@
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
-	import { getDraftState } from '$lib/stores/drafts.svelte';
+	import { getDraftsState } from '$lib/stores/drafts.svelte';
 
-	const draftState = getDraftState();
+	const draftsState = getDraftsState();
 	const editorState = getEditorContext();
 
 	// Store editor view reference for external updates
 	let view: EditorView | null = null;
+
+	// Track if we're currently syncing from draft to avoid loops
+	let isSyncingFromDraft = false;
 
 	// Map vim mode strings to our type
 	function mapVimMode(mode: string, subMode?: string): VimModeType {
@@ -67,7 +70,7 @@
 	// Action for editor initialization - runs once on mount
 	function initEditor(container: HTMLDivElement) {
 		const state = EditorState.create({
-			doc: draftState.draft?.content ?? '',
+			doc: draftsState.currentDraft?.content ?? '',
 			extensions: [
 				...createExtensions(),
 				// DOM event handlers
@@ -92,10 +95,10 @@
 				}),
 				// Update listener to sync content and cursor to context
 				EditorView.updateListener.of((update) => {
-					if (update.docChanged) {
+					if (update.docChanged && !isSyncingFromDraft) {
 						const content = update.state.doc.toString();
 						editorState.setContent(content);
-						draftState.updateContent(content);
+						draftsState.updateContent(content);
 					}
 					if (update.selectionSet || update.docChanged) {
 						updateCursorPosition(update.view);
@@ -122,6 +125,35 @@
 			}
 		};
 	}
+
+	// Sync editor content when current draft changes
+	$effect(() => {
+		const draft = draftsState.currentDraft;
+		if (view) {
+			const newContent = draft?.content ?? '';
+			const currentContent = view.state.doc.toString();
+			if (currentContent !== newContent) {
+				isSyncingFromDraft = true;
+				view.dispatch({
+					changes: {
+						from: 0,
+						to: view.state.doc.length,
+						insert: newContent
+					}
+				});
+				isSyncingFromDraft = false;
+				editorState.setContent(newContent);
+			}
+		}
+	});
+
+	// Focus editor when navigating to different draft
+	$effect(() => {
+		draftsState.currentDraft; // track reference changes
+		if (view) {
+			view.focus();
+		}
+	});
 </script>
 
 <div use:initEditor class="editor-container" role="textbox" aria-label="Text editor"></div>

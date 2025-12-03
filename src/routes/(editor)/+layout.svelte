@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { DraftsState, setDraftsState } from '$lib/stores/drafts.svelte';
 	import StatusLine from './StatusLine.svelte';
 	import WinBar from './WinBar.svelte';
 
 	let { data, children } = $props();
 
 	createEditorContext();
-
-	const currentDraftId = $derived(page.params.id ? Number(page.params.id) : null);
+	const draftsState = new DraftsState(data.drafts);
+	setDraftsState(draftsState);
 </script>
 
 <Sidebar.Provider>
@@ -17,16 +17,26 @@
 		<WinBar />
 		<Sidebar.Root collapsible="offcanvas">
 			<Sidebar.Content class="gap-0">
-				{#each data.drafts as draft (draft.id)}
+				{#if draftsState.currentDraft === null}
+					<a
+						href="/drafts/new"
+						class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors bg-sidebar-accent"
+					>
+						<div class="truncate text-sm font-medium text-sidebar-foreground">
+							Untitled
+						</div>
+					</a>
+				{/if}
+				{#each draftsState.drafts as draft (draft.id)}
 					<a
 						href="/drafts/{draft.id}"
 						class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors hover:bg-sidebar-accent"
-						class:bg-sidebar-accent={currentDraftId === draft.id}
+						class:bg-sidebar-accent={draftsState.currentDraft?.id === draft.id}
 					>
 						<div class="truncate text-sm font-medium text-sidebar-foreground">
 							{draft.title}
 						</div>
-						{#each draft.previewLines as line}
+						{#each draft.previewLines as line, i (i)}
 							<div class="truncate text-xs text-sidebar-foreground/60">
 								{line}
 							</div>
