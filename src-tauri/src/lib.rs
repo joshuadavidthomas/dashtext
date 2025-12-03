@@ -1,21 +1,10 @@
-use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+mod db;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let migrations = vec![Migration {
-        version: 1,
-        description: "create_draft_table",
-        sql: include_str!("../../src/lib/db/migrations/0000_clean_blockbuster.sql"),
-        kind: MigrationKind::Up,
-    }];
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(
-            SqlBuilder::default()
-                .add_migrations("sqlite:dashtext.db", migrations)
-                .build(),
-        )
+        .plugin(db::plugin())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
