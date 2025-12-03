@@ -26,7 +26,7 @@
 	<header
 		data-layout="menu-bar"
 		data-tauri-drag-region
-		class="flex h-[var(--layout-menu-h)] items-center justify-between bg-[var(--cm-background-dark)] px-2"
+		class="flex h-[var(--layout-menu-h)] cursor-default select-none items-center justify-between bg-[var(--cm-background-dark)] px-2"
 	>
 		<div class="flex items-center gap-1" style="-webkit-app-region: no-drag;">
 			<Tooltip.Root>
@@ -35,7 +35,7 @@
 						<button
 							{...props}
 							onclick={() => sidebar.toggle()}
-							class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
+							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							class:text-[var(--cm-accent)]={sidebar.open}
 							aria-label="Toggle sidebar"
 							aria-pressed={sidebar.open}
@@ -53,7 +53,7 @@
 						<button
 							{...props}
 							onclick={() => draftsState.newDraft()}
-							class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
+							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							aria-label="New draft"
 						>
 							<Plus class="size-3.5" />
@@ -71,7 +71,7 @@
 						<button
 							{...props}
 							onclick={minimize}
-							class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
+							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							aria-label="Minimize"
 						>
 							<Minus class="size-3.5" />
@@ -87,7 +87,7 @@
 						<button
 							{...props}
 							onclick={toggleMaximize}
-							class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
+							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 							aria-label="Maximize"
 						>
 							<Square class="size-3" />
@@ -103,7 +103,7 @@
 						<button
 							{...props}
 							onclick={close}
-							class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-error)]"
+							class="cursor-pointer p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-error)]"
 							aria-label="Close"
 						>
 							<X class="size-3.5" />

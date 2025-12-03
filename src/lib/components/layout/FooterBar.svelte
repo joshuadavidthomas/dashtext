@@ -37,7 +37,7 @@
 
 <footer
 	data-layout="footer-bar"
-	class="flex h-[var(--layout-footer-h)] items-center justify-between bg-[var(--cm-statusline-bg)] font-mono text-xs"
+	class="flex h-[var(--layout-footer-h)] cursor-default select-none items-center justify-between bg-[var(--cm-statusline-bg)] font-mono text-xs"
 >
 	<!-- Left section: Mode indicator + VIM toggle -->
 	<div class="flex h-full items-center">
