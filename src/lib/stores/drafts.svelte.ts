@@ -1,187 +1,127 @@
-import { createContext } from 'svelte';
+import { createContext, untrack } from 'svelte';
 import { useDebounce } from 'runed';
-import { listDrafts, createDraft, saveDraft, deleteDraft } from '$lib/api/drafts';
+import { replaceState } from '$app/navigation';
+import { createDraft, saveDraft } from '$lib/api';
 
 /**
  * Raw draft data shape from Tauri API
  */
 export type DraftData = {
-	id: number;
-	content: string;
-	created_at: string;
-	modified_at: string;
+  id: number;
+  content: string;
+  created_at: string;
+  modified_at: string;
 };
 
 /**
  * Draft - reactive draft model with derived presentation properties
  */
 export class Draft {
-	id: number;
-	content = $state('');
-	created_at: string;
-	modified_at = $state('');
+  id: number;
+  content = $state('');
+  created_at: string;
+  modified_at = $state('');
 
-	title = $derived(this.content.split('\n')[0].trim() || 'Untitled');
+  title = $derived(this.content.split('\n')[0].trim() || 'Untitled');
 
-	previewLines = $derived.by(() => {
-		const lines = this.content.split('\n').slice(1);
-		return lines.filter((line) => line.trim()).slice(0, 3);
-	});
+  previewLines = $derived.by(() => {
+    const lines = this.content.split('\n').slice(1);
+    return lines.filter((line) => line.trim()).slice(0, 3);
+  });
 
-	formattedModifiedAt = $derived.by(() => {
-		const value = this.modified_at;
-		const asNumber = parseInt(value);
-		const date =
-			!isNaN(asNumber) && value === String(asNumber)
-				? new Date(asNumber * 1000) // Unix timestamp (seconds)
-				: new Date(value); // ISO/RFC 3339 string
+  formattedModifiedAt = $derived.by(() => {
+    const value = this.modified_at;
+    const asNumber = parseInt(value);
+    const date =
+      !isNaN(asNumber) && value === String(asNumber)
+        ? new Date(asNumber * 1000) // Unix timestamp (seconds)
+        : new Date(value); // ISO/RFC 3339 string
 
-		if (isNaN(date.getTime())) return 'Unknown date';
+    if (isNaN(date.getTime())) return 'Unknown date';
 
-		return date.toLocaleString(undefined, {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		});
-	});
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  });
 
-	constructor(data: DraftData) {
-		this.id = data.id;
-		this.content = data.content;
-		this.created_at = data.created_at;
-		this.modified_at = data.modified_at;
-	}
+  constructor(data: DraftData) {
+    this.id = data.id;
+    this.content = data.content;
+    this.created_at = data.created_at;
+    this.modified_at = data.modified_at;
+  }
 }
 
 /**
- * DraftsState - manages draft list and current draft with autosave
+ * DraftsState - unified state for all drafts and current draft with autosave
+ * Set in context by root layout, consumed by Editor, Sidebar, and route pages
  */
 export class DraftsState {
-	drafts = $state<Draft[]>([]);
-	currentDraft = $state<Draft | null>(null);
-	isLoading = $state(false);
-	error = $state('');
+  drafts = $state<Draft[]>([]);
+  currentDraft = $state<Draft | null>(null);
 
-	// Debounced save using runed
-	private debouncedSave = useDebounce(() => this.performSave(), () => 500);
+  private pendingContent: string | null = null;
+  private debouncedSave: ReturnType<typeof useDebounce>;
 
-	/**
-	 * Initialize: load drafts, select most recent or create one if empty
-	 */
-	async init() {
-		this.isLoading = true;
-		this.error = '';
+  constructor(initialDrafts: Draft[]) {
+    this.drafts = initialDrafts;
+    this.debouncedSave = useDebounce(() => this.performSave(), () => 500);
+  }
 
-		try {
-			this.drafts = await listDrafts();
+  setCurrentDraft(draft: Draft | null) {
+    if (draft) {
+      // Use existing draft from our array to maintain object identity for reactivity
+      this.currentDraft = this.drafts.find((d) => d.id === draft.id) ?? draft;
+    } else {
+      this.currentDraft = null;
+    }
+  }
 
-			if (this.drafts.length === 0) {
-				// Create initial draft if none exist
-				const newDraft = await createDraft();
-				this.drafts = [newDraft];
-			}
+  updateContent(content: string) {
+    if (this.currentDraft) {
+      this.currentDraft.content = content;
+    }
+    this.pendingContent = content;
+    this.debouncedSave();
+  }
 
-			// Select most recent (first in list, since sorted by modified_at DESC)
-			this.currentDraft = this.drafts[0];
-		} catch (e) {
-			this.error = e instanceof Error ? e.message : String(e);
-		} finally {
-			this.isLoading = false;
-		}
-	}
+  flushPendingSave() {
+    this.debouncedSave.runScheduledNow();
+  }
 
-	/**
-	 * Select a draft by ID
-	 */
-	async selectDraft(id: number) {
-		// Flush any pending save first
-		this.debouncedSave.runScheduledNow();
+  private async performSave() {
+    if (this.pendingContent === null) return;
 
-		const draft = this.drafts.find((d) => d.id === id);
-		if (draft) {
-			this.currentDraft = draft;
-		}
-	}
+    if (this.currentDraft === null && this.pendingContent.trim()) {
+      // NEW DRAFT: create in DB, update local state, replaceState URL
+      const newDraft = await createDraft();
+      newDraft.content = this.pendingContent;
+      await saveDraft(newDraft.id, this.pendingContent);
 
-	/**
-	 * Update current draft content (triggers debounced save)
-	 */
-	updateContent(content: string) {
-		if (!this.currentDraft) return;
+      // Update local state (triggers reactive updates)
+      this.drafts = [newDraft, ...this.drafts];
+      this.currentDraft = newDraft;
 
-		// Update reactive state directly
-		this.currentDraft.content = content;
+      // Update URL without navigation (preserves focus)
+      replaceState(`/drafts/${newDraft.id}`, {});
+    } else if (this.currentDraft !== null) {
+      // EXISTING DRAFT: just save
+      const updated = await saveDraft(this.currentDraft.id, this.pendingContent);
+      this.currentDraft.modified_at = updated.modified_at;
+    }
 
-		// Trigger debounced save
-		this.debouncedSave();
-	}
-
-	/**
-	 * Create a new draft and select it
-	 */
-	async newDraft() {
-		// Flush any pending save first
-		this.debouncedSave.runScheduledNow();
-
-		try {
-			const draft = await createDraft();
-			this.drafts = [draft, ...this.drafts];
-			this.currentDraft = draft;
-		} catch (e) {
-			this.error = e instanceof Error ? e.message : String(e);
-		}
-	}
-
-	/**
-	 * Delete a draft by ID
-	 */
-	async removeDraft(id: number) {
-		try {
-			await deleteDraft(id);
-			this.drafts = this.drafts.filter((d) => d.id !== id);
-
-			// If we deleted the current draft, select another or create new
-			if (this.currentDraft?.id === id) {
-				if (this.drafts.length > 0) {
-					this.currentDraft = this.drafts[0];
-				} else {
-					const newDraft = await createDraft();
-					this.drafts = [newDraft];
-					this.currentDraft = newDraft;
-				}
-			}
-		} catch (e) {
-			this.error = e instanceof Error ? e.message : String(e);
-		}
-	}
-
-	/**
-	 * Actually save to database
-	 */
-	private async performSave() {
-		if (!this.currentDraft) return;
-
-		try {
-			const updated = await saveDraft(this.currentDraft.id, this.currentDraft.content);
-			// Update modified_at from server response
-			this.currentDraft.modified_at = updated.modified_at;
-		} catch (e) {
-			this.error = e instanceof Error ? e.message : String(e);
-		}
-	}
+    this.pendingContent = null;
+  }
 }
 
-// Svelte 5 createContext returns [get, set] tuple
 export const [getDraftsState, setDraftsState] = createContext<DraftsState>();
 
-/**
- * Create DraftsState and set it in context
- * Call this in a parent component (e.g., +layout.svelte)
- */
-export const createDraftsState = () => {
-	const drafts = new DraftsState();
-	setDraftsState(drafts);
-	return drafts;
+export const createDraftsState = (getInitialDrafts: () => Draft[]) => {
+  const drafts = new DraftsState(untrack(getInitialDrafts));
+  setDraftsState(drafts);
+  return drafts;
 };

@@ -3,14 +3,17 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { deleteDraft } from '$lib/api';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
+	import { goto } from '$app/navigation';
 	import { Minus, PanelLeft, Plus, Square, Trash2, X } from '@lucide/svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
-
 
 	const appWindow = getCurrentWindow();
 	const sidebar = useSidebar();
 	const draftsState = getDraftsState();
+
+	const currentDraftId = $derived(draftsState.currentDraft?.id ?? null);
 
 	async function minimize() {
 		await appWindow.minimize();
@@ -22,6 +25,25 @@
 
 	async function close() {
 		await appWindow.close();
+	}
+
+	function handleNew() {
+		goto('/drafts/new');
+	}
+
+	async function handleDelete() {
+		if (!currentDraftId) return;
+		await deleteDraft(currentDraftId);
+
+		// Update local state
+		draftsState.drafts = draftsState.drafts.filter((d) => d.id !== currentDraftId);
+
+		// Navigate to another draft or new
+		if (draftsState.drafts.length > 0) {
+			goto(`/drafts/${draftsState.drafts[0].id}`);
+		} else {
+			goto('/drafts/new');
+		}
 	}
 </script>
 
@@ -54,7 +76,7 @@
 								{...props}
 								variant="toolbar"
 								size="icon-sm"
-								onclick={() => draftsState.newDraft()}
+								onclick={handleNew}
 								aria-label="New draft"
 							>
 								<Plus class="size-3.5" />
@@ -71,8 +93,8 @@
 								{...props}
 								variant="toolbar"
 								size="icon-sm"
-								onclick={() => draftsState.currentDraft && draftsState.removeDraft(draftsState.currentDraft.id)}
-								disabled={!draftsState.currentDraft}
+								onclick={handleDelete}
+								disabled={!currentDraftId}
 								aria-label="Delete draft"
 							>
 								<Trash2 class="size-3.5" />

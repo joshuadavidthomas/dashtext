@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { EditorView } from '@codemirror/view';
-	import { EditorState } from '@codemirror/state';
+	import { Annotation, EditorState } from '@codemirror/state';
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
 
-	const editorState = getEditorContext();
 	const draftsState = getDraftsState();
+	const editorState = getEditorContext();
 
 	// Store editor view reference for external updates
 	let view: EditorView | null = null;
+
+	// Annotation to mark transactions that sync content from draft (not user edits)
+	const syncFromDraft = Annotation.define<boolean>();
 
 	// Map vim mode strings to our type
 	function mapVimMode(mode: string, subMode?: string): VimModeType {
@@ -64,9 +67,6 @@
 		vimModeChangeHandler = null;
 	}
 
-	// Track if we're currently syncing from drafts to avoid loops
-	let isSyncingFromDraft = false;
-
 	// Action for editor initialization - runs once on mount
 	function initEditor(container: HTMLDivElement) {
 		const state = EditorState.create({
@@ -95,7 +95,8 @@
 				}),
 				// Update listener to sync content and cursor to context
 				EditorView.updateListener.of((update) => {
-					if (update.docChanged && !isSyncingFromDraft) {
+					const isSyncFromDraft = update.transactions.some((tr) => tr.annotation(syncFromDraft));
+					if (update.docChanged && !isSyncFromDraft) {
 						const content = update.state.doc.toString();
 						editorState.setContent(content);
 						draftsState.updateContent(content);
@@ -129,21 +130,28 @@
 	// Sync editor content when current draft changes
 	$effect(() => {
 		const draft = draftsState.currentDraft;
-		if (draft && view) {
+		if (view) {
+			const newContent = draft?.content ?? '';
 			const currentContent = view.state.doc.toString();
-			if (currentContent !== draft.content) {
-				isSyncingFromDraft = true;
+			if (currentContent !== newContent) {
 				view.dispatch({
 					changes: {
 						from: 0,
 						to: view.state.doc.length,
-						insert: draft.content
-					}
+						insert: newContent
+					},
+					annotations: syncFromDraft.of(true)
 				});
-				isSyncingFromDraft = false;
-				// Also update editor state
-				editorState.setContent(draft.content);
+				editorState.setContent(newContent);
 			}
+		}
+	});
+
+	// Focus editor when navigating to different draft
+	$effect(() => {
+		draftsState.currentDraft; // track reference changes
+		if (view) {
+			view.focus();
 		}
 	});
 </script>
