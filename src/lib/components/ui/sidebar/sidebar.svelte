@@ -69,7 +69,7 @@
 			"transition-[width] duration-(--sidebar-duration) ease-linear",
 			"data-[collapsible=offcanvas]:w-0 data-[collapsible=offcanvas]:overflow-hidden",
 			"w-(--sidebar-width)",
-			side === "left" ? "border-r" : "border-l",
+			side === "left" ? "border-r border-sidebar-border" : "border-l border-sidebar-border",
 			className
 		)}
 		{...restProps}
