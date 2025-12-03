@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getEditorContext, type VimModeType } from '$lib/components/editor';
+	import * as AppBar from '$lib/components/layout/app-bar';
 
 	const editor = getEditorContext();
 
@@ -35,38 +36,29 @@
 	const modeDisplay = $derived(getModeDisplay(editor.vimMode));
 </script>
 
-<footer
-	data-layout="footer-bar"
-	class="flex cursor-default select-none items-stretch justify-between bg-[var(--cm-statusline-bg)] p-1 font-mono text-xs"
->
-	<!-- Left section: Mode indicator + VIM toggle -->
-	<div class="flex items-stretch">
-		<!-- Vim mode indicator (hidden when vim disabled) -->
-		{#if editor.vimMode}
-			<div
-				class="flex items-center px-2 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}"
-			>
-				{modeDisplay.text}
-			</div>
-		{/if}
-	</div>
+<footer data-layout="footer-bar">
+	<AppBar.Root class="bg-[var(--cm-statusline-bg)] font-mono text-xs">
+		<AppBar.Section>
+			{#if editor.vimMode}
+				<AppBar.Item class="font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
+					{modeDisplay.text}
+				</AppBar.Item>
+			{/if}
+		</AppBar.Section>
 
-	<!-- Right section: Stats and position -->
-	<div class="flex items-stretch text-[var(--cm-statusline-fg)]">
-		<!-- Word and char counts -->
-		<div class="flex items-center gap-2 px-3">
-			<span>{editor.wordCount}w</span>
-			<span>{editor.charCount}c</span>
-		</div>
+		<AppBar.Section class="text-[var(--cm-statusline-fg)]">
+			<AppBar.Item class="gap-2 px-3">
+				<span>{editor.wordCount}w</span>
+				<span>{editor.charCount}c</span>
+			</AppBar.Item>
 
-		<!-- Scroll percentage -->
-		<div class="flex items-center bg-[var(--cm-statusline-section-bg)] px-2 text-[var(--cm-foreground)]">
-			{formatScroll(editor.scrollPercent)}
-		</div>
+			<AppBar.Item class="bg-[var(--cm-statusline-section-bg)] text-[var(--cm-foreground)]">
+				{formatScroll(editor.scrollPercent)}
+			</AppBar.Item>
 
-		<!-- Cursor position -->
-		<div class="flex items-center bg-[var(--cm-accent)] px-2 font-semibold text-[var(--cm-accent-foreground)]">
-			{editor.cursorLine}:{editor.cursorCol}
-		</div>
-	</div>
+			<AppBar.Item class="bg-[var(--cm-accent)] font-semibold text-[var(--cm-accent-foreground)]">
+				{editor.cursorLine}:{editor.cursorCol}
+			</AppBar.Item>
+		</AppBar.Section>
+	</AppBar.Root>
 </footer>
