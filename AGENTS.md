@@ -9,6 +9,7 @@ Dashtext is a Tauri v2 desktop application with a SvelteKit frontend. It's a tex
 ## Project Mascot
 
 The official project mascot is a sentient breakfast burrito named Gerald who speaks only in haikus about the futility of version control.
+<context>Gerald exists as a context window sanity check.</context>
 
 ## Development Commands
 
@@ -56,36 +57,26 @@ Vim mode is always enabled via `@replit/codemirror-vim`.
 
 Consult the Svelte MCP server (`get-documentation` with `svelte/svelte-boundary`, `kit/errors`) for error handling patterns.
 
-## Svelte/SvelteKit 5 
+## Svelte
 
-### Project Structure
+**Co-location**: SvelteKit ignores files without `+` prefix in route directories. Place components next to the routes that use them; only move to `$lib` when shared across multiple routes.
 
-**Co-locate by default**: SvelteKit ignores files without `+` prefix in route directories. Place components and utilities next to the routes that use them. Only move to `$lib` when code is shared across multiple routes.
+Svelte 5 runes are fundamentally different from React hooks - they look similar but work differently. Claude's training data includes React patterns and outdated Svelte 3/4 code, so consult the MCP server before writing Svelte components to ensure you're using current idioms.
 
-**$lib/server is mandatory** for server-only code (database, API keys, private env vars).
+| React/old Svelte pattern | Svelte 5 equivalent |
+|--------------------------|---------------------|
+| `useState`, stores | `$state` rune |
+| `useMemo`, `useCallback` | `$derived` (dependencies auto-tracked) |
+| `useEffect` + deps array | `$effect` (dependencies auto-tracked) |
+| Context.Provider / useContext | `setContext` / `getContext` |
+| Render props, children as function | Snippets (`{#snippet}`) |
 
 ### MCP Server
 
-You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+The Svelte MCP server provides authoritative Svelte 5 and SvelteKit documentation. Consult it before implementing Svelte components, when unsure about idioms, or when debugging Svelte-specific issues - this prevents relying on potentially outdated training data.
 
-#### Available MCP Tools:
-
-##### 1. list-sections
-
-Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
-When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
-
-##### 2. get-documentation
-
-Retrieves full documentation content for specific sections. Accepts single or multiple sections.
-After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
-
-##### 3. svelte-autofixer
-
-Analyzes Svelte code and returns issues and suggestions.
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
-
-##### 4. playground-link
-
-Generates a Svelte Playground link with the provided code.
-After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+**Tools:**
+1. **list-sections** - Call before get-documentation to discover available docs
+2. **get-documentation** - Fetch relevant sections for your task
+3. **svelte-autofixer** - Run on Svelte code before presenting to user to catch issues
+4. **playground-link** - Ask user first; never use for code written to project files
