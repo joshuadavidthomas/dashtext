@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { tv, type VariantProps } from "tailwind-variants";
 	export const sheetVariants = tv({
-		base: "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+		base: "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-(--sheet-close-duration) data-[state=open]:duration-(--sheet-open-duration)",
 		variants: {
 			side: {
 				top: "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
@@ -26,6 +26,7 @@
 	import SheetOverlay from "./sheet-overlay.svelte";
 	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 	import type { ComponentProps } from "svelte";
+	import { SHEET_CLOSE_DURATION, SHEET_OPEN_DURATION } from "./constants.js";
 
 	let {
 		ref = $bindable(null),
@@ -46,6 +47,7 @@
 	<SheetPrimitive.Content
 		bind:ref
 		data-slot="sheet-content"
+		style="--sheet-close-duration: {SHEET_CLOSE_DURATION}; --sheet-open-duration: {SHEET_OPEN_DURATION};"
 		class={cn(sheetVariants({ side }), className)}
 		{...restProps}
 	>

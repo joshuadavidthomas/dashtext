@@ -69,7 +69,7 @@
 		<div
 			data-slot="sidebar-gap"
 			class={cn(
-				"w-(--sidebar-width) relative bg-transparent transition-[width] duration-200 ease-linear",
+				"w-(--sidebar-width) relative bg-transparent transition-[width] duration-(--sidebar-duration) ease-linear",
 				"group-data-[collapsible=offcanvas]:w-0",
 				"group-data-[side=right]:rotate-180",
 				variant === "floating" || variant === "inset"
@@ -80,7 +80,7 @@
 		<div
 			data-slot="sidebar-container"
 			class={cn(
-				"w-(--sidebar-width) fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] duration-200 ease-linear md:flex",
+				"w-(--sidebar-width) fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] duration-(--sidebar-duration) ease-linear md:flex",
 				side === "left"
 					? "start-0 group-data-[collapsible=offcanvas]:start-[calc(var(--sidebar-width)*-1)]"
 					: "end-0 group-data-[collapsible=offcanvas]:end-[calc(var(--sidebar-width)*-1)]",
