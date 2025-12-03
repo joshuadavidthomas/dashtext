@@ -19,7 +19,10 @@
 
 [data-layout="sidebar"] {
   grid-area: sidebar;
-  display: none;
+  width: calc(var(--spacing) * 64);
+  overflow-y: auto;
+  background-color: var(--sidebar);
+  border-right: 1px solid var(--sidebar-border);
 }
 
 [data-layout="main"] {

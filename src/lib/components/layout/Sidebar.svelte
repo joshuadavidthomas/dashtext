@@ -42,18 +42,23 @@
 
 <style>
 	.sidebar-header {
-		padding: 0.5rem;
-		border-bottom: 1px solid var(--border, #333);
+		padding: calc(var(--spacing) * 2);
+		border-bottom: 1px solid var(--sidebar-border);
 	}
 
 	.new-draft-btn {
 		width: 100%;
-		padding: 0.5rem;
-		background: var(--accent, #4a9eff);
-		color: white;
+		padding: calc(var(--spacing) * 2);
+		background: var(--sidebar-primary);
+		color: var(--sidebar-primary-foreground);
 		border: none;
-		border-radius: 4px;
+		border-radius: var(--radius-md);
 		cursor: pointer;
+		font-weight: 500;
+	}
+
+	.new-draft-btn:hover {
+		opacity: 0.9;
 	}
 
 	.draft-list {
@@ -64,30 +69,34 @@
 
 	.draft-item {
 		width: 100%;
-		padding: 0.75rem;
+		padding: calc(var(--spacing) * 3);
 		text-align: left;
 		background: none;
 		border: none;
-		border-bottom: 1px solid var(--border, #333);
+		border-bottom: 1px solid var(--sidebar-border);
 		cursor: pointer;
-		color: inherit;
+		color: var(--sidebar-foreground);
+		font-size: 0.875rem;
 	}
 
 	.draft-item:hover {
-		background: var(--hover, #2a2a2a);
+		background: var(--sidebar-accent);
+		color: var(--sidebar-accent-foreground);
 	}
 
 	.draft-item.selected {
-		background: var(--selected, #3a3a3a);
+		background: var(--sidebar-accent);
+		color: var(--sidebar-accent-foreground);
 	}
 
 	.loading,
 	.error {
-		padding: 1rem;
+		padding: calc(var(--spacing) * 4);
 		text-align: center;
+		color: var(--sidebar-foreground);
 	}
 
 	.error {
-		color: var(--error, #ff4a4a);
+		color: var(--destructive);
 	}
 </style>
