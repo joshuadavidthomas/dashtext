@@ -3,6 +3,11 @@
   "productName": "dashtext",
   "version": "0.1.0",
   "identifier": "app.dashtext",
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:dashtext.db"]
+    }
+  },
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
