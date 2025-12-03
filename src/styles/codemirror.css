@@ -63,9 +63,7 @@
   --cm-statusline-fg: var(--color-tokyonight-moon-fg-dark);
   --cm-statusline-section-bg: var(--color-tokyonight-moon-fg-gutter);
 
-  /* Layout sizing */
-  --layout-menu-h: 36px;
-  --layout-footer-h: 28px;
+  
 }
 
 @media (prefers-color-scheme: light) {

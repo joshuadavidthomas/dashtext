@@ -4,8 +4,13 @@
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
+	import { getDraftsState } from '$lib/stores/drafts.svelte';
 
 	const editorState = getEditorContext();
+	const draftsState = getDraftsState();
+
+	// Store editor view reference for external updates
+	let view: EditorView | null = null;
 
 	// Map vim mode strings to our type
 	function mapVimMode(mode: string, subMode?: string): VimModeType {
@@ -27,19 +32,19 @@
 	}
 
 	// Update cursor position from editor state
-	function updateCursorPosition(view: EditorView) {
-		const pos = view.state.selection.main.head;
-		const line = view.state.doc.lineAt(pos);
+	function updateCursorPosition(v: EditorView) {
+		const pos = v.state.selection.main.head;
+		const line = v.state.doc.lineAt(pos);
 		editorState.setCursorPosition(line.number, pos - line.from + 1);
-		editorState.setTotalLines(view.state.doc.lines);
+		editorState.setTotalLines(v.state.doc.lines);
 	}
 
 	// Vim mode change handler reference for cleanup
 	let vimModeChangeHandler: ((event: { mode: string }) => void) | null = null;
 
 	// Setup vim mode change listener
-	function setupVimModeListener(view: EditorView) {
-		const cm = getCM(view);
+	function setupVimModeListener(v: EditorView) {
+		const cm = getCM(v);
 		if (!cm) return;
 
 		vimModeChangeHandler = (event: { mode: string; subMode?: string }) => {
@@ -50,29 +55,32 @@
 	}
 
 	// Cleanup vim mode listener
-	function cleanupVimModeListener(view: EditorView) {
+	function cleanupVimModeListener(v: EditorView) {
 		if (!vimModeChangeHandler) return;
-		const cm = getCM(view);
+		const cm = getCM(v);
 		if (!cm) return;
 
 		cm.off('vim-mode-change', vimModeChangeHandler);
 		vimModeChangeHandler = null;
 	}
 
+	// Track if we're currently syncing from drafts to avoid loops
+	let isSyncingFromDraft = false;
+
 	// Action for editor initialization - runs once on mount
 	function initEditor(container: HTMLDivElement) {
 		const state = EditorState.create({
-			doc: '',
+			doc: draftsState.currentDraft?.content ?? '',
 			extensions: [
 				...createExtensions(),
 				// DOM event handlers
 				EditorView.domEventHandlers({
-					keydown: (event, view) => {
+					keydown: (event, v) => {
 						// Trap Tab in all modes except normal (allow focus navigation in normal)
 						if (event.key === 'Tab' && editorState.vimMode !== 'normal') {
 							event.preventDefault();
 							if (editorState.vimMode === 'insert') {
-								view.dispatch(view.state.replaceSelection('\t'));
+								v.dispatch(v.state.replaceSelection('\t'));
 							}
 							return true;
 						}
@@ -87,8 +95,10 @@
 				}),
 				// Update listener to sync content and cursor to context
 				EditorView.updateListener.of((update) => {
-					if (update.docChanged) {
-						editorState.setContent(update.state.doc.toString());
+					if (update.docChanged && !isSyncingFromDraft) {
+						const content = update.state.doc.toString();
+						editorState.setContent(content);
+						draftsState.updateContent(content);
 					}
 					if (update.selectionSet || update.docChanged) {
 						updateCursorPosition(update.view);
@@ -97,7 +107,7 @@
 			]
 		});
 
-		const view = new EditorView({ state, parent: container });
+		view = new EditorView({ state, parent: container });
 		view.focus();
 		editorState.setFocused(true);
 
@@ -107,19 +117,38 @@
 
 		return {
 			destroy() {
-				cleanupVimModeListener(view);
-				view.destroy();
+				if (view) {
+					cleanupVimModeListener(view);
+					view.destroy();
+					view = null;
+				}
 			}
 		};
 	}
+
+	// Sync editor content when current draft changes
+	$effect(() => {
+		const draft = draftsState.currentDraft;
+		if (draft && view) {
+			const currentContent = view.state.doc.toString();
+			if (currentContent !== draft.content) {
+				isSyncingFromDraft = true;
+				view.dispatch({
+					changes: {
+						from: 0,
+						to: view.state.doc.length,
+						insert: draft.content
+					}
+				});
+				isSyncingFromDraft = false;
+				// Also update editor state
+				editorState.setContent(draft.content);
+			}
+		}
+	});
 </script>
 
-<div
-	use:initEditor
-	class="editor-container"
-	role="textbox"
-	aria-label="Text editor"
-></div>
+<div use:initEditor class="editor-container" role="textbox" aria-label="Text editor"></div>
 
 <style>
 	.editor-container {

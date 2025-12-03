@@ -1,9 +1,9 @@
 <script lang="ts">
+	import * as AppBar from '$lib/components/appbar';
 	import { getEditorContext, type VimModeType } from '$lib/components/editor';
 
 	const editor = getEditorContext();
 
-	// Get the display text and CSS class for vim mode
 	function getModeDisplay(mode: VimModeType): { text: string; class: string } {
 		switch (mode) {
 			case 'normal':
@@ -25,7 +25,6 @@
 		}
 	}
 
-	// Format scroll percentage display
 	function formatScroll(percent: number): string {
 		if (percent === 0) return 'Top';
 		if (percent >= 100) return 'Bot';
@@ -35,39 +34,25 @@
 	const modeDisplay = $derived(getModeDisplay(editor.vimMode));
 </script>
 
-<footer
-	data-layout="footer-bar"
-	class="flex h-[var(--layout-footer-h)] items-center justify-between bg-[var(--cm-statusline-bg)] font-mono text-xs"
->
-	<!-- Left section: Mode indicator + VIM toggle -->
-	<div class="flex h-full items-center">
-		<!-- Vim mode indicator (hidden when vim disabled) -->
-		{#if editor.vimMode}
-			<div
-				class="flex h-full items-center px-2 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}"
-			>
-				{modeDisplay.text}
-			</div>
-		{/if}
+<AppBar.Root as="footer" data-layout="footer-bar" class="bg-[var(--cm-statusline-bg)] font-mono text-xs">
+	<AppBar.Section>
+    <div class="px-2 py-0.5 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
+      {modeDisplay.text}
+    </div>
+	</AppBar.Section>
 
-	</div>
-
-	<!-- Right section: Stats and position -->
-	<div class="flex h-full items-center text-[var(--cm-statusline-fg)]">
-		<!-- Word and char counts -->
-		<div class="flex items-center gap-2 px-3">
+	<AppBar.Section class="text-[var(--cm-statusline-fg)]">
+    <div class="gap-2 px-3 flex items-center py-0.5">
 			<span>{editor.wordCount}w</span>
 			<span>{editor.charCount}c</span>
 		</div>
 
-		<!-- Scroll percentage -->
-		<div class="flex h-full items-center bg-[var(--cm-statusline-section-bg)] px-2 text-[var(--cm-foreground)]">
+		<div class="px-2 py-0.5 bg-[var(--cm-statusline-section-bg)] text-[var(--cm-foreground)]">
 			{formatScroll(editor.scrollPercent)}
 		</div>
 
-		<!-- Cursor position -->
-		<div class="flex h-full items-center bg-[var(--cm-accent)] px-2 font-semibold text-[var(--cm-accent-foreground)]">
+		<div class="px-2 py-0.5 bg-[var(--cm-accent)] font-semibold text-[var(--cm-accent-foreground)]">
 			{editor.cursorLine}:{editor.cursorCol}
 		</div>
-	</div>
-</footer>
+	</AppBar.Section>
+</AppBar.Root>

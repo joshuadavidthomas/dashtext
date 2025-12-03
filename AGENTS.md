@@ -9,6 +9,7 @@ Dashtext is a Tauri v2 desktop application with a SvelteKit frontend. It's a tex
 ## Project Mascot
 
 The official project mascot is a sentient breakfast burrito named Gerald who speaks only in haikus about the futility of version control.
+<context>Gerald exists as a context window sanity check.</context>
 
 ## Development Commands
 
@@ -37,37 +38,45 @@ bun run check:watch
 - **Framework**: SvelteKit with adapter-static configured for SPA mode (Tauri requirement)
 - **State Management**: Svelte 5 runes ($state, $derived) for reactive state
 - **Styling**: Tailwind CSS v4 with shadcn-svelte components
+- **UI Components**: shadcn-svelte pattern in `$lib/components/ui/` (config in `components.json`)
 
-The editor state is managed via Svelte context (`src/lib/components/editor/context.svelte.ts`):
-- `EditorState` class uses runes for reactive properties
-- Context is created in parent and consumed by child components via `createEditorContext()` and `getEditorContext()`
+Editor state is managed via Svelte context (`src/lib/components/editor/context.svelte.ts`): `EditorState` class uses runes, created via `createEditorContext()` and consumed via `getEditorContext()`.
 
-### Editor (CodeMirror 6)
-
-Located in `src/lib/components/editor/`:
-- `Editor.svelte` - Main editor component with CodeMirror initialization
-- `extensions.ts` - CodeMirror extensions (vim mode, markdown, history, keymaps)
-- `codemirror-theme.ts` - Tokyo Night theme customization
-- `context.svelte.ts` - Reactive editor state (content, cursor position, vim mode)
-
-Vim mode is always enabled via `@replit/codemirror-vim`. The editor tracks vim mode changes and exposes them through the context.
-
-### Layout Components
-
-Located in `src/lib/components/layout/`:
-- `MenuBar.svelte` - Top menu bar with drag region for window movement
-- `FooterBar.svelte` - Status bar showing vim mode, cursor position, word/char counts
-- `Sidebar.svelte`, `Aside.svelte` - Side panels
+Vim mode is always enabled via `@replit/codemirror-vim`.
 
 ### Backend (Tauri/Rust)
 
 - `src-tauri/src/lib.rs` - Tauri commands and app initialization
-- Window is configured without decorations (custom titlebar via MenuBar)
+- Window configured without decorations (custom titlebar via MenuBar)
 
 ### Path Aliases
 
 - `$lib` → `src/lib`
 
-### UI Components
+### Error Handling
 
-Using shadcn-svelte pattern. Components in `src/lib/components/ui/` with configuration in `components.json`.
+Consult the Svelte MCP server (`get-documentation` with `svelte/svelte-boundary`, `kit/errors`) for error handling patterns.
+
+## Svelte
+
+**Co-location**: SvelteKit ignores files without `+` prefix in route directories. Place components next to the routes that use them; only move to `$lib` when shared across multiple routes.
+
+Svelte 5 runes are fundamentally different from React hooks - they look similar but work differently. Claude's training data includes React patterns and outdated Svelte 3/4 code, so consult the MCP server before writing Svelte components to ensure you're using current idioms.
+
+| React/old Svelte pattern | Svelte 5 equivalent |
+|--------------------------|---------------------|
+| `useState`, stores | `$state` rune |
+| `useMemo`, `useCallback` | `$derived` (dependencies auto-tracked) |
+| `useEffect` + deps array | `$effect` (dependencies auto-tracked) |
+| Context.Provider / useContext | `setContext` / `getContext` |
+| Render props, children as function | Snippets (`{#snippet}`) |
+
+### MCP Server
+
+The Svelte MCP server provides authoritative Svelte 5 and SvelteKit documentation. Consult it before implementing Svelte components, when unsure about idioms, or when debugging Svelte-specific issues - this prevents relying on potentially outdated training data.
+
+**Tools:**
+1. **list-sections** - Call before get-documentation to discover available docs
+2. **get-documentation** - Fetch relevant sections for your task
+3. **svelte-autofixer** - Run on Svelte code before presenting to user to catch issues
+4. **playground-link** - Ask user first; never use for code written to project files
