@@ -18,11 +18,11 @@
 				toolbar:
 					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]",
 				"toolbar-close":
-					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-error)]",
+					"text-[var(--cm-comment)] hover:bg-[var(--cm-error)] hover:text-[var(--cm-background-dark)]",
 				"toolbar-minimize":
-					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-warning)]",
+					"text-[var(--cm-comment)] hover:bg-[var(--cm-warning)] hover:text-[var(--cm-background-dark)]",
 				"toolbar-maximize":
-					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-mode-insert-bg)]",
+					"text-[var(--cm-comment)] hover:bg-[var(--cm-mode-insert-bg)] hover:text-[var(--cm-background-dark)]",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",
