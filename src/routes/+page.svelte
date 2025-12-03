@@ -2,7 +2,6 @@
 	import { Editor, createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
-	import SidebarItem from './SidebarItem.svelte';
 	import StatusLine from './StatusLine.svelte';
 	import WinBar from './WinBar.svelte';
 
