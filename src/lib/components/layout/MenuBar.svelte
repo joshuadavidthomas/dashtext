@@ -27,7 +27,7 @@
 	<header
 		data-layout="menu-bar"
 		data-tauri-drag-region
-		class="flex h-[var(--layout-menu-h)] cursor-default select-none items-center justify-between bg-[var(--cm-background-dark)] px-2"
+		class="flex cursor-default select-none items-stretch justify-between bg-[var(--cm-background-dark)] p-1"
 	>
 		<div class="flex items-center gap-1" style="-webkit-app-region: no-drag;">
 			<Tooltip.Root>

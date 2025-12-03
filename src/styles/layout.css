@@ -4,7 +4,7 @@
     "menu    menu    menu"
     "sidebar main    aside"
     "footer  footer  footer";
-  grid-template-rows: var(--layout-menu-h) 1fr var(--layout-footer-h);
+  grid-template-rows: auto 1fr auto;
   grid-template-columns: auto 1fr auto;
   height: 100vh;
   width: 100vw;

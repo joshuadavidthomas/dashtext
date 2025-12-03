@@ -7,7 +7,7 @@
 </script>
 
 <Sidebar.Root collapsible="offcanvas">
-	<Sidebar.Content>
+	<Sidebar.Content class="gap-0">
 		{#if draftsState.isLoading}
 			<div class="p-4 text-center text-sm text-sidebar-foreground/70">Loading...</div>
 		{:else if draftsState.error}
