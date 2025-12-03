@@ -19,10 +19,7 @@
 
 [data-layout="sidebar"] {
   grid-area: sidebar;
-  width: calc(var(--spacing) * 64);
   overflow-y: auto;
-  background-color: var(--cm-background-dark);
-  border-right: 1px solid var(--cm-gutter-foreground);
 }
 
 [data-layout="main"] {
