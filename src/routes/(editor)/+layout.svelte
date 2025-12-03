@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import StatusLine from './StatusLine.svelte';
@@ -7,6 +8,8 @@
 	let { data, children } = $props();
 
 	createEditorContext();
+
+	const currentDraftId = $derived(page.params.id ? Number(page.params.id) : null);
 </script>
 
 <Sidebar.Provider>
@@ -18,6 +21,7 @@
 					<a
 						href="/drafts/{draft.id}"
 						class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors hover:bg-sidebar-accent"
+						class:bg-sidebar-accent={currentDraftId === draft.id}
 					>
 						<div class="truncate text-sm font-medium text-sidebar-foreground">
 							{draft.title}
