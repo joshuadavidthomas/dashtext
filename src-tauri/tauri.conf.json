@@ -1,19 +1,5 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "dashtext",
-  "version": "0.1.0",
-  "identifier": "app.dashtext",
-  "plugins": {
-    "sql": {
-      "preload": ["sqlite:dashtext.db"]
-    }
-  },
-  "build": {
-    "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
-    "frontendDist": "../build"
-  },
   "app": {
     "windows": [
       {
@@ -27,6 +13,12 @@
       "csp": null
     }
   },
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../build"
+  },
   "bundle": {
     "active": true,
     "targets": "all",
@@ -37,5 +29,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
-  }
+  },
+  "identifier": "app.dashtext",
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:dashtext.db"]
+    }
+  },
+  "productName": "dashtext",
+  "version": "0.1.0"
 }
