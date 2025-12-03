@@ -133,13 +133,7 @@ impl Draft {
     }
 }
 
-/// Get current time as ISO 8601 string
+/// Get current time as RFC 3339 string
 fn chrono_now() -> String {
-    use std::time::SystemTime;
-    let now = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    // Format as ISO 8601 (simplified - just use Unix timestamp for now, or add chrono later)
-    format!("{}", now)
+    jiff::Zoned::now().to_string()
 }

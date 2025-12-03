@@ -30,9 +30,18 @@
 
 	/**
 	 * Format timestamp as readable date/time
+	 * Handles both legacy Unix timestamps and RFC 3339 strings
 	 */
-	function formatTimestamp(iso: string): string {
-		const date = new Date(iso);
+	function formatTimestamp(value: string): string {
+		// Handle legacy Unix timestamps (numeric string)
+		const asNumber = parseInt(value);
+		const date =
+			!isNaN(asNumber) && value === String(asNumber)
+				? new Date(asNumber * 1000) // Unix timestamp (seconds)
+				: new Date(value); // ISO/RFC 3339 string
+
+		if (isNaN(date.getTime())) return 'Unknown date';
+
 		return date.toLocaleString(undefined, {
 			month: 'short',
 			day: 'numeric',
