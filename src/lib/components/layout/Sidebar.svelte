@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
+	import { getUIState } from '$lib/stores/ui.svelte';
 
 	const draftsState = getDraftsState();
+	const uiState = getUIState();
 
 	/**
 	 * Get display title from draft content (first line, truncated)
@@ -14,6 +16,7 @@
 	}
 </script>
 
+{#if uiState.sidebarVisible}
 <aside data-layout="sidebar">
 	<div class="sidebar-header">
 		<button onclick={() => draftsState.newDraft()} class="new-draft-btn"> + New </button>
@@ -39,6 +42,7 @@
 		</ul>
 	{/if}
 </aside>
+{/if}
 
 <style>
 	.sidebar-header {
