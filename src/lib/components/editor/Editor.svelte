@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { EditorView } from '@codemirror/view';
-	import { EditorState } from '@codemirror/state';
+	import { Annotation, EditorState } from '@codemirror/state';
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
@@ -12,8 +12,8 @@
 	// Store editor view reference for external updates
 	let view: EditorView | null = null;
 
-	// Track if we're currently syncing from draft to avoid loops
-	let isSyncingFromDraft = false;
+	// Annotation to mark transactions that sync content from draft (not user edits)
+	const syncFromDraft = Annotation.define<boolean>();
 
 	// Map vim mode strings to our type
 	function mapVimMode(mode: string, subMode?: string): VimModeType {
@@ -95,7 +95,8 @@
 				}),
 				// Update listener to sync content and cursor to context
 				EditorView.updateListener.of((update) => {
-					if (update.docChanged && !isSyncingFromDraft) {
+					const isSyncFromDraft = update.transactions.some((tr) => tr.annotation(syncFromDraft));
+					if (update.docChanged && !isSyncFromDraft) {
 						const content = update.state.doc.toString();
 						editorState.setContent(content);
 						draftsState.updateContent(content);
@@ -133,15 +134,14 @@
 			const newContent = draft?.content ?? '';
 			const currentContent = view.state.doc.toString();
 			if (currentContent !== newContent) {
-				isSyncingFromDraft = true;
 				view.dispatch({
 					changes: {
 						from: 0,
 						to: view.state.doc.length,
 						insert: newContent
-					}
+					},
+					annotations: syncFromDraft.of(true)
 				});
-				isSyncingFromDraft = false;
 				editorState.setContent(newContent);
 			}
 		}

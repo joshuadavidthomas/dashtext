@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { DraftsState, setDraftsState } from '$lib/stores/drafts.svelte';
+	import { createDraftsState } from '$lib/stores/drafts.svelte';
 	import StatusLine from './StatusLine.svelte';
 	import WinBar from './WinBar.svelte';
 
 	let { data, children } = $props();
 
 	createEditorContext();
-	const draftsState = new DraftsState(data.drafts);
-	setDraftsState(draftsState);
+	const draftsState = createDraftsState(() => data.drafts);
 </script>
 
 <Sidebar.Provider>
@@ -33,14 +32,14 @@
 						class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors hover:bg-sidebar-accent"
 						class:bg-sidebar-accent={draftsState.currentDraft?.id === draft.id}
 					>
-						<div class="truncate text-sm font-medium text-sidebar-foreground">
-							{draft.title}
+					<div class="w-full truncate text-sm font-medium text-sidebar-foreground">
+						{draft.title}
+					</div>
+					{#each draft.previewLines as line, i (i)}
+						<div class="w-full truncate text-xs text-sidebar-foreground/60">
+							{line}
 						</div>
-						{#each draft.previewLines as line, i (i)}
-							<div class="truncate text-xs text-sidebar-foreground/60">
-								{line}
-							</div>
-						{/each}
+					{/each}
 						{#if draft.content.trim()}
 							<div class="text-xs text-sidebar-foreground/40">
 								{draft.formattedModifiedAt}
