@@ -43,14 +43,14 @@
 <style>
 	.sidebar-header {
 		padding: calc(var(--spacing) * 2);
-		border-bottom: 1px solid var(--sidebar-border);
+		border-bottom: 1px solid var(--cm-gutter-foreground);
 	}
 
 	.new-draft-btn {
 		width: 100%;
 		padding: calc(var(--spacing) * 2);
-		background: var(--sidebar-primary);
-		color: var(--sidebar-primary-foreground);
+		background: var(--cm-accent);
+		color: var(--cm-accent-foreground);
 		border: none;
 		border-radius: var(--radius-md);
 		cursor: pointer;
@@ -73,30 +73,28 @@
 		text-align: left;
 		background: none;
 		border: none;
-		border-bottom: 1px solid var(--sidebar-border);
+		border-bottom: 1px solid var(--cm-gutter-foreground);
 		cursor: pointer;
-		color: var(--sidebar-foreground);
+		color: var(--cm-foreground);
 		font-size: 0.875rem;
 	}
 
 	.draft-item:hover {
-		background: var(--sidebar-accent);
-		color: var(--sidebar-accent-foreground);
+		background: var(--cm-background-highlight);
 	}
 
 	.draft-item.selected {
-		background: var(--sidebar-accent);
-		color: var(--sidebar-accent-foreground);
+		background: var(--cm-selection);
 	}
 
 	.loading,
 	.error {
 		padding: calc(var(--spacing) * 4);
 		text-align: center;
-		color: var(--sidebar-foreground);
+		color: var(--cm-foreground);
 	}
 
 	.error {
-		color: var(--destructive);
+		color: var(--cm-error);
 	}
 </style>
