@@ -4,7 +4,7 @@
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
-	import { Minus, PanelLeft, Plus, Square, X } from '@lucide/svelte';
+	import { Minus, PanelLeft, Plus, Square, Trash2, X } from '@lucide/svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 
@@ -62,6 +62,24 @@
 						{/snippet}
 					</Tooltip.Trigger>
 					<Tooltip.Content side="bottom">New draft (Ctrl+N)</Tooltip.Content>
+				</Tooltip.Root>
+
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="toolbar"
+								size="icon-sm"
+								onclick={() => draftsState.currentDraft && draftsState.removeDraft(draftsState.currentDraft.id)}
+								disabled={!draftsState.currentDraft}
+								aria-label="Delete draft"
+							>
+								<Trash2 class="size-3.5" />
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">Delete draft</Tooltip.Content>
 				</Tooltip.Root>
 			</AppBar.Section>
 

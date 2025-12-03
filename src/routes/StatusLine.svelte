@@ -4,7 +4,6 @@
 
 	const editor = getEditorContext();
 
-	// Get the display text and CSS class for vim mode
 	function getModeDisplay(mode: VimModeType): { text: string; class: string } {
 		switch (mode) {
 			case 'normal':
@@ -26,7 +25,6 @@
 		}
 	}
 
-	// Format scroll percentage display
 	function formatScroll(percent: number): string {
 		if (percent === 0) return 'Top';
 		if (percent >= 100) return 'Bot';
@@ -38,11 +36,9 @@
 
 <AppBar.Root as="footer" data-layout="footer-bar" class="bg-[var(--cm-statusline-bg)] font-mono text-xs">
 	<AppBar.Section>
-		{#if editor.vimMode}
-			<div class="flex items-center px-2 py-0.5 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
-				{modeDisplay.text}
-			</div>
-		{/if}
+    <div class="px-2 py-0.5 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
+      {modeDisplay.text}
+    </div>
 	</AppBar.Section>
 
 	<AppBar.Section class="text-[var(--cm-statusline-fg)]">
@@ -51,11 +47,11 @@
 			<span>{editor.charCount}c</span>
 		</div>
 
-		<div class="flex items-center px-2 py-0.5 bg-[var(--cm-statusline-section-bg)] text-[var(--cm-foreground)]">
+		<div class="px-2 py-0.5 bg-[var(--cm-statusline-section-bg)] text-[var(--cm-foreground)]">
 			{formatScroll(editor.scrollPercent)}
 		</div>
 
-		<div class="flex items-center px-2 py-0.5 bg-[var(--cm-accent)] font-semibold text-[var(--cm-accent-foreground)]">
+		<div class="px-2 py-0.5 bg-[var(--cm-accent)] font-semibold text-[var(--cm-accent-foreground)]">
 			{editor.cursorLine}:{editor.cursorCol}
 		</div>
 	</AppBar.Section>

@@ -133,7 +133,7 @@ impl Draft {
     }
 }
 
-/// Get current time as RFC 3339 string
+/// Get current time as RFC 3339 string (without bracketed timezone for JS compatibility)
 fn chrono_now() -> String {
-    jiff::Zoned::now().to_string()
+    jiff::Zoned::now().strftime("%Y-%m-%dT%H:%M:%S%:z").to_string()
 }

@@ -11,29 +11,18 @@
 		onclick: () => void;
 	} = $props();
 
-	/**
-	 * Extract title from first line of content
-	 */
 	function getTitle(content: string): string {
 		const firstLine = content.split('\n')[0].trim();
 		return firstLine || 'Untitled';
 	}
 
-	/**
-	 * Extract up to 3 preview lines (after the title)
-	 */
 	function getPreviewLines(content: string): string[] {
 		const lines = content.split('\n').slice(1);
 		const nonEmpty = lines.filter((line) => line.trim());
 		return nonEmpty.slice(0, 3);
 	}
 
-	/**
-	 * Format timestamp as readable date/time
-	 * Handles both legacy Unix timestamps and RFC 3339 strings
-	 */
 	function formatTimestamp(value: string): string {
-		// Handle legacy Unix timestamps (numeric string)
 		const asNumber = parseInt(value);
 		const date =
 			!isNaN(asNumber) && value === String(asNumber)
@@ -54,7 +43,7 @@
 
 <button
 	{onclick}
-	class="w-full px-3 py-2 text-left transition-colors hover:bg-sidebar-accent"
+	class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors hover:bg-sidebar-accent"
 	class:bg-sidebar-accent={isActive}
 >
 	<div class="truncate text-sm font-medium text-sidebar-foreground">
@@ -65,7 +54,9 @@
 			{line}
 		</div>
 	{/each}
-	<div class="mt-1 text-xs text-sidebar-foreground/40">
-		{formatTimestamp(draft.modified_at)}
-	</div>
+	{#if draft.content.trim()}
+		<div class="text-xs text-sidebar-foreground/40">
+			{formatTimestamp(draft.modified_at)}
+		</div>
+	{/if}
 </button>
