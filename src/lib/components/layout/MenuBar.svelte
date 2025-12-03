@@ -73,7 +73,7 @@
 					{#snippet child({ props })}
 						<Button
 							{...props}
-							variant="toolbar"
+							variant="toolbar-minimize"
 							size="icon-sm"
 							onclick={minimize}
 							aria-label="Minimize"
@@ -90,7 +90,7 @@
 					{#snippet child({ props })}
 						<Button
 							{...props}
-							variant="toolbar"
+							variant="toolbar-maximize"
 							size="icon-sm"
 							onclick={toggleMaximize}
 							aria-label="Maximize"
@@ -107,7 +107,7 @@
 					{#snippet child({ props })}
 						<Button
 							{...props}
-							variant="toolbar-destructive"
+							variant="toolbar-close"
 							size="icon-sm"
 							onclick={close}
 							aria-label="Close"

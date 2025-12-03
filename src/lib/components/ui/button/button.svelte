@@ -17,8 +17,12 @@
 				link: "text-primary underline-offset-4 hover:underline",
 				toolbar:
 					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]",
-				"toolbar-destructive":
+				"toolbar-close":
 					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-error)]",
+				"toolbar-minimize":
+					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-warning)]",
+				"toolbar-maximize":
+					"text-[var(--cm-comment)] hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-mode-insert-bg)]",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",
