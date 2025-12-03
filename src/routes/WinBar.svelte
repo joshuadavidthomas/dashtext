@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { Minus, Square, X, PanelLeft, Plus } from '@lucide/svelte';
-	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
-	import { getDraftsState } from '$lib/stores/drafts.svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import * as AppBar from '$lib/components/appbar';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import * as AppBar from '$lib/components/layout/app-bar';
+	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { getDraftsState } from '$lib/stores/drafts.svelte';
+	import { Minus, PanelLeft, Plus, Square, X } from '@lucide/svelte';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
+
 
 	const appWindow = getCurrentWindow();
 	const sidebar = useSidebar();

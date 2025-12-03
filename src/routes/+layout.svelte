@@ -13,8 +13,4 @@
 	});
 </script>
 
-<Sidebar.Provider>
-	<div data-layout="root">
-		{@render children()}
-	</div>
-</Sidebar.Provider>
+{@render children()}
