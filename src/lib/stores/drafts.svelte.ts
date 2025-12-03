@@ -1,4 +1,7 @@
 import { createContext } from 'svelte';
+import { useDebounce } from 'runed';
+import { createDraft, saveDraft } from '$lib/api';
+import { goto, invalidateAll } from '$app/navigation';
 
 /**
  * Raw draft data shape from Tauri API
@@ -9,16 +12,6 @@ export type DraftData = {
 	created_at: string;
 	modified_at: string;
 };
-
-/**
- * Current draft context for Editor and other components
- */
-export interface CurrentDraftContext {
-	draft: () => Draft | null;
-	updateContent: (content: string) => void;
-}
-
-export const [getCurrentDraft, setCurrentDraft] = createContext<CurrentDraftContext>();
 
 /**
  * Draft - reactive draft model with derived presentation properties
@@ -62,3 +55,53 @@ export class Draft {
 		this.modified_at = data.modified_at;
 	}
 }
+
+/**
+ * DraftState - manages current draft and autosave
+ * Set in context by route pages, consumed by Editor and other components
+ */
+export class DraftState {
+	draft = $state<Draft | null>(null);
+	private draftId: number | null;
+	private pendingContent: string | null = null;
+	private debouncedSave: ReturnType<typeof useDebounce>;
+
+	constructor(draft: Draft | null = null) {
+		this.draft = draft;
+		this.draftId = draft?.id ?? null;
+		this.debouncedSave = useDebounce(() => this.performSave(), () => 500);
+	}
+
+	updateContent(content: string) {
+		if (this.draft) {
+			this.draft.content = content;
+		}
+		this.pendingContent = content;
+		this.debouncedSave();
+	}
+
+	private async performSave() {
+		if (this.pendingContent === null) return;
+
+		if (this.draftId === null && this.pendingContent.trim()) {
+			// Create new draft on first save
+			const newDraft = await createDraft();
+			this.draftId = newDraft.id;
+			this.draft = newDraft;
+			this.draft.content = this.pendingContent;
+			await saveDraft(this.draftId, this.pendingContent);
+			await invalidateAll();
+			goto(`/drafts/${this.draftId}`, { replaceState: true });
+		} else if (this.draftId !== null) {
+			await saveDraft(this.draftId, this.pendingContent);
+		}
+
+		this.pendingContent = null;
+	}
+
+	flushPendingSave() {
+		this.debouncedSave.runScheduledNow();
+	}
+}
+
+export const [getDraftState, setDraftState] = createContext<DraftState>();

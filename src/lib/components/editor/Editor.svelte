@@ -4,9 +4,9 @@
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
-	import { getCurrentDraft } from '$lib/stores/drafts.svelte';
+	import { getDraftState } from '$lib/stores/drafts.svelte';
 
-	const { draft, updateContent } = getCurrentDraft();
+	const draftState = getDraftState();
 	const editorState = getEditorContext();
 
 	// Store editor view reference for external updates
@@ -67,7 +67,7 @@
 	// Action for editor initialization - runs once on mount
 	function initEditor(container: HTMLDivElement) {
 		const state = EditorState.create({
-			doc: draft()?.content ?? '',
+			doc: draftState.draft?.content ?? '',
 			extensions: [
 				...createExtensions(),
 				// DOM event handlers
@@ -95,7 +95,7 @@
 					if (update.docChanged) {
 						const content = update.state.doc.toString();
 						editorState.setContent(content);
-						updateContent(content);
+						draftState.updateContent(content);
 					}
 					if (update.selectionSet || update.docChanged) {
 						updateCursorPosition(update.view);
