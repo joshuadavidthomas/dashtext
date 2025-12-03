@@ -25,8 +25,7 @@
 </script>
 
 <Tooltip.Provider delayDuration={300}>
-	<header data-layout="menu-bar" data-tauri-drag-region>
-		<AppBar.Root class="bg-[var(--cm-background-dark)]">
+	<AppBar.Root as="header" data-layout="menu-bar" data-tauri-drag-region class="gap-1 bg-[var(--cm-background-dark)] p-1">
 			<AppBar.Section style="-webkit-app-region: no-drag;">
 				<Tooltip.Root>
 					<Tooltip.Trigger>
@@ -117,6 +116,5 @@
 					<Tooltip.Content side="bottom">Close</Tooltip.Content>
 				</Tooltip.Root>
 			</AppBar.Section>
-		</AppBar.Root>
-	</header>
+	</AppBar.Root>
 </Tooltip.Provider>

@@ -13,7 +13,7 @@
 <div
 	bind:this={ref}
 	data-slot="app-bar-section"
-	class={cn("flex items-stretch gap-1", className)}
+	class={cn("flex items-center", className)}
 	{...restProps}
 >
 	{@render children?.()}

@@ -12,8 +12,8 @@
 
 <div
 	bind:this={ref}
-	data-slot="app-bar-item"
-	class={cn("flex items-center px-2", className)}
+	data-slot="app-bar-section"
+	class={cn("flex items-center", className)}
 	{...restProps}
 >
 	{@render children?.()}
