@@ -4,10 +4,15 @@
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
-	import { getDraftsState } from '$lib/stores/drafts.svelte';
+
+	interface Props {
+		initialContent?: string;
+		onchange?: (content: string) => void;
+	}
+
+	let { initialContent = '', onchange }: Props = $props();
 
 	const editorState = getEditorContext();
-	const draftsState = getDraftsState();
 
 	// Store editor view reference for external updates
 	let view: EditorView | null = null;
@@ -64,13 +69,10 @@
 		vimModeChangeHandler = null;
 	}
 
-	// Track if we're currently syncing from drafts to avoid loops
-	let isSyncingFromDraft = false;
-
 	// Action for editor initialization - runs once on mount
 	function initEditor(container: HTMLDivElement) {
 		const state = EditorState.create({
-			doc: draftsState.currentDraft?.content ?? '',
+			doc: initialContent,
 			extensions: [
 				...createExtensions(),
 				// DOM event handlers
@@ -95,10 +97,10 @@
 				}),
 				// Update listener to sync content and cursor to context
 				EditorView.updateListener.of((update) => {
-					if (update.docChanged && !isSyncingFromDraft) {
+					if (update.docChanged) {
 						const content = update.state.doc.toString();
 						editorState.setContent(content);
-						draftsState.updateContent(content);
+						onchange?.(content);
 					}
 					if (update.selectionSet || update.docChanged) {
 						updateCursorPosition(update.view);
@@ -125,27 +127,6 @@
 			}
 		};
 	}
-
-	// Sync editor content when current draft changes
-	$effect(() => {
-		const draft = draftsState.currentDraft;
-		if (draft && view) {
-			const currentContent = view.state.doc.toString();
-			if (currentContent !== draft.content) {
-				isSyncingFromDraft = true;
-				view.dispatch({
-					changes: {
-						from: 0,
-						to: view.state.doc.length,
-						insert: draft.content
-					}
-				});
-				isSyncingFromDraft = false;
-				// Also update editor state
-				editorState.setContent(draft.content);
-			}
-		}
-	});
 </script>
 
 <div use:initEditor class="editor-container" role="textbox" aria-label="Text editor"></div>
