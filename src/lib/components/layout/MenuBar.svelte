@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { Minus, Square, X, PanelLeft } from '@lucide/svelte';
+	import { Minus, Square, X, PanelLeft, Plus } from '@lucide/svelte';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
+	import { getDraftsState } from '$lib/stores/drafts.svelte';
 
 	const appWindow = getCurrentWindow();
 	const sidebar = useSidebar();
+	const draftsState = getDraftsState();
 
 	async function minimize() {
 		await appWindow.minimize();
@@ -27,12 +29,19 @@
 	<div class="flex items-center gap-1" style="-webkit-app-region: no-drag;">
 		<button
 			onclick={() => sidebar.toggle()}
-			class="rounded p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
+			class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
 			class:text-[var(--cm-accent)]={sidebar.open}
 			aria-label="Toggle sidebar"
 			aria-pressed={sidebar.open}
 		>
 			<PanelLeft class="size-3.5" />
+		</button>
+		<button
+			onclick={() => draftsState.newDraft()}
+			class="p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
+			aria-label="New draft"
+		>
+			<Plus class="size-3.5" />
 		</button>
 	</div>
 	<div class="flex items-center gap-1" style="-webkit-app-region: no-drag;">
