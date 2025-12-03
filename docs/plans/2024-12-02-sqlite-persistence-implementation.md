@@ -19,14 +19,15 @@
 **Files:**
 - Modify: `src-tauri/Cargo.toml`
 
-**Step 1: Add sqlx and tokio dependencies**
+**Step 1: Add sqlx, tokio, and directories dependencies**
 
 Add these to the `[dependencies]` section in `src-tauri/Cargo.toml`:
 
 ```toml
+anyhow = "1.0"
+directories = "6.0"
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
 tokio = { version = "1.0", features = ["full"] }
-anyhow = "1.0"
 ```
 
 **Step 2: Verify it compiles**
@@ -38,7 +39,7 @@ Expected: Compiles successfully (may take a while to fetch dependencies)
 
 ```bash
 git add src-tauri/Cargo.toml
-git commit -m "feat: add sqlx sqlite dependencies"
+git commit -m "feat: add sqlx, directories, and tokio dependencies"
 ```
 
 ---
@@ -87,9 +88,24 @@ Create `src-tauri/src/db.rs`:
 
 ```rust
 use anyhow::Result;
+use directories::ProjectDirs;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-use std::path::Path;
+use std::path::PathBuf;
 use std::str::FromStr;
+
+/// Get the ProjectDirs instance for dashtext
+pub fn get_project_dirs() -> Result<ProjectDirs> {
+    ProjectDirs::from("", "", "dashtext")
+        .ok_or_else(|| anyhow::anyhow!("Failed to get project directories"))
+}
+
+/// Get the database path using XDG directories
+/// Linux: ~/.local/share/dashtext/dashtext.db
+/// macOS: ~/Library/Application Support/dashtext/dashtext.db
+/// Windows: C:\Users\<User>\AppData\Roaming\dashtext\dashtext.db
+pub fn get_db_path() -> Result<PathBuf> {
+    Ok(get_project_dirs()?.data_dir().join("dashtext.db"))
+}
 
 #[derive(Clone)]
 pub struct Database(SqlitePool);
@@ -104,7 +120,9 @@ impl Database {
     }
 }
 
-pub async fn init_db(db_path: &Path) -> Result<SqlitePool> {
+pub async fn init_db() -> Result<SqlitePool> {
+    let db_path = get_db_path()?;
+
     // Ensure the parent directory exists
     if let Some(parent) = db_path.parent() {
         tokio::fs::create_dir_all(parent).await?;
@@ -285,20 +303,17 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // Get the app data directory for the database
-            let app_data_dir = app
-                .path()
-                .app_data_dir()
-                .expect("failed to get app data dir");
-            let db_path = app_data_dir.join("dashtext.db");
-
             // Initialize database asynchronously
+            // Uses XDG directories via the `directories` crate
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                match db::init_db(&db_path).await {
+                match db::init_db().await {
                     Ok(pool) => {
                         app_handle.manage(Database::new(pool));
-                        println!("Database initialized at: {}", db_path.display());
+                        match db::get_db_path() {
+                            Ok(path) => println!("Database initialized at: {}", path.display()),
+                            Err(_) => println!("Database initialized"),
+                        }
                     }
                     Err(e) => {
                         eprintln!("Failed to initialize database: {}", e);

@@ -39,6 +39,8 @@ src-tauri/
 
 ### db.rs
 
+- `get_project_dirs() -> Result<ProjectDirs>`: XDG-compliant directory paths via `directories` crate
+- `get_db_path() -> Result<PathBuf>`: database path (`~/.local/share/dashtext/dashtext.db` on Linux)
 - `Database`: newtype wrapper around `SqlitePool`, managed as Tauri state
 - `Draft`: struct with methods (no trait for now):
   - `create(pool) -> Result<Draft>`
@@ -46,7 +48,7 @@ src-tauri/
   - `list(pool) -> Result<Vec<Draft>>`
   - `save(&self, pool) -> Result<Draft>`
   - `delete(pool, id) -> Result<()>`
-- `init_db(path) -> Result<SqlitePool>`: creates pool, runs migrations
+- `init_db() -> Result<SqlitePool>`: gets path via `get_db_path()`, creates pool, runs migrations
 
 ### Tauri Commands (lib.rs)
 
