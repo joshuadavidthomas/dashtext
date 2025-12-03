@@ -37,37 +37,55 @@ bun run check:watch
 - **Framework**: SvelteKit with adapter-static configured for SPA mode (Tauri requirement)
 - **State Management**: Svelte 5 runes ($state, $derived) for reactive state
 - **Styling**: Tailwind CSS v4 with shadcn-svelte components
+- **UI Components**: shadcn-svelte pattern in `$lib/components/ui/` (config in `components.json`)
 
-The editor state is managed via Svelte context (`src/lib/components/editor/context.svelte.ts`):
-- `EditorState` class uses runes for reactive properties
-- Context is created in parent and consumed by child components via `createEditorContext()` and `getEditorContext()`
+Editor state is managed via Svelte context (`src/lib/components/editor/context.svelte.ts`): `EditorState` class uses runes, created via `createEditorContext()` and consumed via `getEditorContext()`.
 
-### Editor (CodeMirror 6)
-
-Located in `src/lib/components/editor/`:
-- `Editor.svelte` - Main editor component with CodeMirror initialization
-- `extensions.ts` - CodeMirror extensions (vim mode, markdown, history, keymaps)
-- `codemirror-theme.ts` - Tokyo Night theme customization
-- `context.svelte.ts` - Reactive editor state (content, cursor position, vim mode)
-
-Vim mode is always enabled via `@replit/codemirror-vim`. The editor tracks vim mode changes and exposes them through the context.
-
-### Layout Components
-
-Located in `src/lib/components/layout/`:
-- `MenuBar.svelte` - Top menu bar with drag region for window movement
-- `FooterBar.svelte` - Status bar showing vim mode, cursor position, word/char counts
-- `Sidebar.svelte`, `Aside.svelte` - Side panels
+Vim mode is always enabled via `@replit/codemirror-vim`.
 
 ### Backend (Tauri/Rust)
 
 - `src-tauri/src/lib.rs` - Tauri commands and app initialization
-- Window is configured without decorations (custom titlebar via MenuBar)
+- Window configured without decorations (custom titlebar via MenuBar)
 
 ### Path Aliases
 
 - `$lib` → `src/lib`
 
-### UI Components
+### Error Handling
 
-Using shadcn-svelte pattern. Components in `src/lib/components/ui/` with configuration in `components.json`.
+Consult the Svelte MCP server (`get-documentation` with `svelte/svelte-boundary`, `kit/errors`) for error handling patterns.
+
+## Svelte/SvelteKit 5 
+
+### Project Structure
+
+**Co-locate by default**: SvelteKit ignores files without `+` prefix in route directories. Place components and utilities next to the routes that use them. Only move to `$lib` when code is shared across multiple routes.
+
+**$lib/server is mandatory** for server-only code (database, API keys, private env vars).
+
+### MCP Server
+
+You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+
+#### Available MCP Tools:
+
+##### 1. list-sections
+
+Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
+When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
+
+##### 2. get-documentation
+
+Retrieves full documentation content for specific sections. Accepts single or multiple sections.
+After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
+
+##### 3. svelte-autofixer
+
+Analyzes Svelte code and returns issues and suggestions.
+You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
+
+##### 4. playground-link
+
+Generates a Svelte Playground link with the provided code.
+After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
