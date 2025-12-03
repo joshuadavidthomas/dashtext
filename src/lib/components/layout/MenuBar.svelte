@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { Minus, Square, X, PanelLeft } from '@lucide/svelte';
-	import { getUIState } from '$lib/stores/ui.svelte';
+	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 
 	const appWindow = getCurrentWindow();
-	const uiState = getUIState();
+	const sidebar = useSidebar();
 
 	async function minimize() {
 		await appWindow.minimize();
@@ -26,11 +26,11 @@
 >
 	<div class="flex items-center gap-1" style="-webkit-app-region: no-drag;">
 		<button
-			onclick={() => uiState.toggleSidebar()}
+			onclick={() => sidebar.toggle()}
 			class="rounded p-1.5 text-[var(--cm-comment)] transition-colors hover:bg-[var(--cm-background-highlight)] hover:text-[var(--cm-foreground)]"
-			class:text-[var(--cm-accent)]={uiState.sidebarVisible}
+			class:text-[var(--cm-accent)]={sidebar.open}
 			aria-label="Toggle sidebar"
-			aria-pressed={uiState.sidebarVisible}
+			aria-pressed={sidebar.open}
 		>
 			<PanelLeft class="size-3.5" />
 		</button>
