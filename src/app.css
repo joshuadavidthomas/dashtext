@@ -110,6 +110,18 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Map sidebar variables to Tokyo Night theme */
+:root {
+  --sidebar: var(--cm-background-dark);
+  --sidebar-foreground: var(--cm-foreground);
+  --sidebar-primary: var(--cm-accent);
+  --sidebar-primary-foreground: var(--cm-accent-foreground);
+  --sidebar-accent: var(--cm-background-highlight);
+  --sidebar-accent-foreground: var(--cm-foreground);
+  --sidebar-border: var(--cm-gutter-foreground);
+  --sidebar-ring: var(--cm-accent);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
