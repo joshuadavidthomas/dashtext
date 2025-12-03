@@ -13,7 +13,7 @@
 		class: className,
 		children,
 		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
+	}: WithElementRef<HTMLAttributes<HTMLElement>, HTMLElement> & {
 		side?: "left" | "right";
 		variant?: "sidebar" | "floating" | "inset";
 		collapsible?: "offcanvas" | "icon" | "none";
@@ -56,49 +56,24 @@
 		</Sheet.Content>
 	</Sheet.Root>
 {:else}
-	<div
+	<aside
 		bind:this={ref}
-		class="text-sidebar-foreground group peer hidden md:block"
+		data-layout="sidebar"
 		data-state={sidebar.state}
 		data-collapsible={sidebar.state === "collapsed" ? collapsible : ""}
 		data-variant={variant}
 		data-side={side}
 		data-slot="sidebar"
+		class={cn(
+			"bg-sidebar text-sidebar-foreground hidden flex-col md:flex",
+			"transition-[width] duration-(--sidebar-duration) ease-linear",
+			"group-data-[collapsible=offcanvas]:w-0 group-data-[collapsible=offcanvas]:overflow-hidden",
+			"w-(--sidebar-width)",
+			side === "left" ? "border-r" : "border-l",
+			className
+		)}
+		{...restProps}
 	>
-		<!-- This is what handles the sidebar gap on desktop -->
-		<div
-			data-slot="sidebar-gap"
-			class={cn(
-				"w-(--sidebar-width) relative bg-transparent transition-[width] duration-(--sidebar-duration) ease-linear",
-				"group-data-[collapsible=offcanvas]:w-0",
-				"group-data-[side=right]:rotate-180",
-				variant === "floating" || variant === "inset"
-					? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-					: "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
-			)}
-		></div>
-		<div
-			data-slot="sidebar-container"
-			class={cn(
-				"w-(--sidebar-width) fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] duration-(--sidebar-duration) ease-linear md:flex",
-				side === "left"
-					? "start-0 group-data-[collapsible=offcanvas]:start-[calc(var(--sidebar-width)*-1)]"
-					: "end-0 group-data-[collapsible=offcanvas]:end-[calc(var(--sidebar-width)*-1)]",
-				// Adjust the padding for floating and inset variants.
-				variant === "floating" || variant === "inset"
-					? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-					: "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-e group-data-[side=right]:border-s",
-				className
-			)}
-			{...restProps}
-		>
-			<div
-				data-sidebar="sidebar"
-				data-slot="sidebar-inner"
-				class="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
-			>
-				{@render children?.()}
-			</div>
-		</div>
-	</div>
+		{@render children?.()}
+	</aside>
 {/if}
