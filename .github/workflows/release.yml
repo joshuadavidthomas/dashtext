@@ -45,11 +45,11 @@ jobs:
         run: |
           gh release upload "${TAG_NAME}" \
             bundle-deb/*.deb \
-            bundle-deb/SHA256SUMS \
+            bundle-deb/*.sha256 \
             bundle-appimage/*.AppImage \
-            bundle-appimage/SHA256SUMS \
+            bundle-appimage/*.sha256 \
             bundle-rpm/*.rpm \
-            bundle-rpm/SHA256SUMS \
+            bundle-rpm/*.sha256 \
             bundle-tar/*.tar.gz \
-            bundle-tar/SHA256SUMS.tar.gz
+            bundle-tar/*.sha256
 
