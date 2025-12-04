@@ -86,4 +86,4 @@ Inspired by [Drafts](https://getdrafts.com/) for iOS and macOS.
 
 ## License
 
-DashText is licensed under the MIT license. See the [`LICENSE`](LICENSE) file for more information.
+DashText is licensed under the Apache License, Version 2.0. See the [`LICENSE`](LICENSE) file for more information.
