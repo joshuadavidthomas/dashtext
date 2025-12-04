@@ -1,7 +1,7 @@
 {
   "name": "dashtext",
   "version": "0.1.0",
-  "description": "",
+  "description": "A cross-platform text editor for capturing drafts",
   "type": "module",
   "scripts": {
     "dev": "vite dev",

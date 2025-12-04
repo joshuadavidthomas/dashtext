@@ -1,7 +1,7 @@
 [package]
 name = "dashtext"
 version = "0.1.0"
-description = "A Tauri App"
+description = "A cross-platform text editor for capturing drafts"
 authors = ["you"]
 license = "Apache-2.0"
 edition = "2021"

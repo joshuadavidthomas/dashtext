@@ -115,10 +115,10 @@ jobs:
       - name: Generate checksums
         working-directory: src-tauri/target/release/bundle
         run: |
-          sha256sum deb/*.deb > deb/SHA256SUMS
-          sha256sum appimage/*.AppImage > appimage/SHA256SUMS
-          sha256sum rpm/*.rpm > rpm/SHA256SUMS
-          sha256sum *.tar.gz > SHA256SUMS.tar.gz
+          for f in deb/*.deb; do sha256sum "$f" > "$f.sha256"; done
+          for f in appimage/*.AppImage; do sha256sum "$f" > "$f.sha256"; done
+          for f in rpm/*.rpm; do sha256sum "$f" > "$f.sha256"; done
+          for f in *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
 
       - name: Upload deb
         uses: actions/upload-artifact@v5
@@ -126,7 +126,7 @@ jobs:
           name: bundle-deb
           path: |
             src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/deb/SHA256SUMS
+            src-tauri/target/release/bundle/deb/*.sha256
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v5
@@ -134,7 +134,7 @@ jobs:
           name: bundle-appimage
           path: |
             src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/appimage/SHA256SUMS
+            src-tauri/target/release/bundle/appimage/*.sha256
 
       - name: Upload rpm
         uses: actions/upload-artifact@v5
@@ -142,7 +142,7 @@ jobs:
           name: bundle-rpm
           path: |
             src-tauri/target/release/bundle/rpm/*.rpm
-            src-tauri/target/release/bundle/rpm/SHA256SUMS
+            src-tauri/target/release/bundle/rpm/*.sha256
 
       - name: Upload tar.gz
         uses: actions/upload-artifact@v5
@@ -150,23 +150,25 @@ jobs:
           name: bundle-tar
           path: |
             src-tauri/target/release/bundle/*.tar.gz
-            src-tauri/target/release/bundle/SHA256SUMS.tar.gz
+            src-tauri/target/release/bundle/*.sha256
 
-  attest:
-    runs-on: ubuntu-24.04
-    if: ${{ inputs.version != '' }}
-    needs: [linux]
-    permissions:
-      id-token: write
-      attestations: write
-    steps:
-      - uses: actions/download-artifact@v6
-
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: |
-            bundle-deb/*
-            bundle-appimage/*
-            bundle-rpm/*
-            bundle-tar/*
+  # TODO: disabled until repo is made public
+  #
+  # attest:
+  #   runs-on: ubuntu-24.04
+  #   if: ${{ inputs.version != '' }}
+  #   needs: [linux]
+  #   permissions:
+  #     id-token: write
+  #     attestations: write
+  #   steps:
+  #     - uses: actions/download-artifact@v6
+  #
+  #     - name: Generate artifact attestation
+  #       uses: actions/attest-build-provenance@v3
+  #       with:
+  #         subject-path: |
+  #           bundle-deb/*
+  #           bundle-appimage/*
+  #           bundle-rpm/*
+  #           bundle-tar/*
