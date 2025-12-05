@@ -35,3 +35,26 @@
 [data-layout="footer-bar"] {
   grid-area: footer;
 }
+
+/* Capture window layout */
+[data-layout="capture-root"] {
+  display: grid;
+  grid-template-areas:
+    "editor"
+    "footer";
+  grid-template-rows: 1fr auto;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--cm-background);
+  color: var(--cm-foreground);
+}
+
+[data-layout="capture-editor"] {
+  grid-area: editor;
+  overflow: hidden;
+}
+
+[data-layout="capture-footer"] {
+  grid-area: footer;
+}

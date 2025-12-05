@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { UpdateDialog } from '$lib/components/updater';
+	import { listDrafts } from '$lib/api';
 	import { createDraftsState } from '$lib/stores/drafts.svelte';
 	import { createUpdaterState } from '$lib/stores/updater.svelte';
 	import StatusLine from './StatusLine.svelte';
@@ -15,6 +17,21 @@
 
 	$effect(() => {
 		updater.init();
+	});
+
+	// Refresh drafts when window gains focus (e.g., after using quick capture)
+	$effect(() => {
+		const unlistenPromise = getCurrentWindow().onFocusChanged(({ payload: focused }) => {
+			if (focused) {
+				listDrafts().then((fresh) => {
+					draftsState.drafts = fresh;
+				});
+			}
+		});
+
+		return () => {
+			unlistenPromise.then((unlisten) => unlisten());
+		};
 	});
 </script>
 
