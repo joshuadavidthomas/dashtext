@@ -13,6 +13,8 @@ Currently focused on fast draft capture with vim-style editing. Processing and a
 
 ## Features
 
+![DashText editor with markdown content](assets/editor-with-content.png)
+
 - Quick capture window for rapid note-taking
 - Vim keybindings always enabled (via CodeMirror 6)
 - Tokyo Night theme
