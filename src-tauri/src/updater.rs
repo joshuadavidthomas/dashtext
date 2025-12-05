@@ -30,8 +30,6 @@ pub struct UpdateManifest {
     pub version: String,
     #[serde(default)]
     pub notes: Option<String>,
-    #[serde(default)]
-    pub pub_date: Option<String>,
     pub platforms: HashMap<String, PlatformInfo>,
 }
 
