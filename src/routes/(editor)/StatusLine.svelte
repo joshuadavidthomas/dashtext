@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as AppBar from '$lib/components/appbar';
 	import { getEditorContext, type VimModeType } from '$lib/components/editor';
+	import { VersionIndicator } from '$lib/components/updater';
 
 	const editor = getEditorContext();
 
@@ -39,6 +40,7 @@
     <div class="px-2 py-0.5 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
       {modeDisplay.text}
     </div>
+		<VersionIndicator />
 	</AppBar.Section>
 
 	<AppBar.Section class="text-[var(--cm-statusline-fg)]">
