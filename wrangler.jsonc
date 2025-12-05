@@ -13,6 +13,15 @@
     "binding": "ASSETS",
     // SPA mode: return index.html for unmatched routes
     "not_found_handling": "single-page-application"
+  },
+  
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    }
   }
 
   // Future: Add D1 database for sync
