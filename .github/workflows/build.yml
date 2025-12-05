@@ -94,7 +94,8 @@ jobs:
       - name: Install minisign
         if: ${{ inputs.sign }}
         run: |
-          curl -sL https://github.com/jedisct1/minisign/releases/download/0.11/minisign-0.11-linux.tar.gz | tar xz
+          MINISIGN_VERSION=$(curl -s https://api.github.com/repos/jedisct1/minisign/releases/latest | jq -r .tag_name)
+          curl -sL "https://github.com/jedisct1/minisign/releases/download/${MINISIGN_VERSION}/minisign-${MINISIGN_VERSION}-linux.tar.gz" | tar xz
           sudo mv minisign-linux/x86_64/minisign /usr/local/bin/
 
       - name: Build Tauri app (unsigned)
