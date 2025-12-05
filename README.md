@@ -8,14 +8,18 @@ DashText is a desktop app for quickly capturing text that you'll process later. 
 
 Currently focused on fast draft capture with vim-style editing. Processing and actions coming in future releases.
 
+> [!NOTE]
+> This is an early, opinionated personal project. I built it because I wanted a Drafts-like app for Linux that fits my workflow. It's shaped by my preferences, though I'd love for it to be useful to others someday, maybe.
+
 ## Features
 
 - Quick capture window for rapid note-taking
-- Vim keybindings (via CodeMirror 6)
+- Vim keybindings always enabled (via CodeMirror 6)
+- Tokyo Night theme
+- Lazyvim-inspired layout with sidebar
 - Local SQLite storage for drafts
-- Sidebar with draft list and previews
 - Word and character count
-- Linux-focused (Windows and macOS should work but are untested)
+- Linux-focused (other platforms should work but are untested)
 
 ## Installation
 
@@ -59,7 +63,7 @@ Categories=Utility;TextEditor;
 
 There's no icon yet. If you'd like one, [Icon Kitchen](https://icon.kitchen/) can generate one for you.
 
-## Roadmap
+## Someday/Maybe
 
 - [ ] Tray icon / global hotkey for quick capture
 - [ ] Draft actions/processing (similar to Drafts)
@@ -74,7 +78,7 @@ There's no icon yet. If you'd like one, [Icon Kitchen](https://icon.kitchen/) ca
 
 ## Contributing
 
-Contributions welcome! This project uses:
+PRs are welcome, though I may be slow to review. This project uses:
 
 - **Frontend**: SvelteKit + Svelte 5, Tailwind CSS v4, shadcn-svelte
 - **Editor**: CodeMirror 6 with @replit/codemirror-vim
