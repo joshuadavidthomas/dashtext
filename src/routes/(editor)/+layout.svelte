@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { UpdateDialog } from '$lib/components/updater';
 	import { createDraftsState } from '$lib/stores/drafts.svelte';
+	import { createUpdaterState } from '$lib/stores/updater.svelte';
 	import StatusLine from './StatusLine.svelte';
 	import WinBar from './WinBar.svelte';
 
@@ -9,6 +11,11 @@
 
 	createEditorContext();
 	const draftsState = createDraftsState(() => data.drafts);
+	const updater = createUpdaterState();
+
+	$effect(() => {
+		updater.init();
+	});
 </script>
 
 <Sidebar.Provider>
@@ -57,4 +64,5 @@
 		</aside>
 		<StatusLine />
 	</div>
+	<UpdateDialog />
 </Sidebar.Provider>

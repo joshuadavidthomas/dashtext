@@ -29,6 +29,9 @@ on:
       GPG_PASSPHRASE:
         description: Passphrase for the GPG key
         required: false
+      MINISIGN_SECRET_KEY:
+        description: Minisign secret key for signing update tarballs
+        required: false
   workflow_dispatch:
 
 concurrency:
@@ -88,6 +91,13 @@ jobs:
         run: |
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
+      - name: Install minisign
+        if: ${{ inputs.sign }}
+        run: |
+          MINISIGN_VERSION=$(curl -s https://api.github.com/repos/jedisct1/minisign/releases/latest | jq -r .tag_name)
+          curl -sL "https://github.com/jedisct1/minisign/releases/download/${MINISIGN_VERSION}/minisign-${MINISIGN_VERSION}-linux.tar.gz" | tar xz
+          sudo mv minisign-linux/x86_64/minisign /usr/local/bin/
+
       - name: Build Tauri app (unsigned)
         if: ${{ !inputs.sign }}
         run: bun run tauri build
@@ -111,6 +121,18 @@ jobs:
           VERSION: ${{ inputs.version || 'dev' }}
         run: |
           tar czf bundle/dashtext-${VERSION}-linux-x86_64.tar.gz dashtext
+
+      - name: Sign tarball with minisign
+        if: ${{ inputs.sign }}
+        working-directory: src-tauri/target/release/bundle
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+        run: |
+          echo "$MINISIGN_SECRET_KEY" > /tmp/minisign.key
+          for f in *.tar.gz; do
+            minisign -Sm "$f" -s /tmp/minisign.key -t "dashtext release"
+          done
+          rm /tmp/minisign.key
 
       - name: Generate checksums
         working-directory: src-tauri/target/release/bundle
@@ -150,6 +172,7 @@ jobs:
           name: bundle-tar
           path: |
             src-tauri/target/release/bundle/*.tar.gz
+            src-tauri/target/release/bundle/*.tar.gz.minisig
             src-tauri/target/release/bundle/*.sha256
 
   # TODO: disabled until repo is made public

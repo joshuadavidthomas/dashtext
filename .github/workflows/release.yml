@@ -22,6 +22,7 @@ jobs:
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
     with:
       version: ${{ github.ref_name }}
       sign: true
@@ -38,12 +39,45 @@ jobs:
 
       - uses: actions/download-artifact@v6
 
+      - name: Generate latest.json for updater
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find the tar.gz file and compute SHA256
+          TARBALL=$(ls bundle-tar/*.tar.gz | head -1)
+          TARBALL_NAME=$(basename "$TARBALL")
+          SHA256=$(sha256sum "$TARBALL" | cut -d' ' -f1)
+          
+          # Read the minisign signature (just the base64 line, not the comment)
+          SIGNATURE=$(tail -1 "${TARBALL}.minisig")
+          
+          # Get release notes from GitHub
+          NOTES=$(gh release view "$TAG_NAME" --json body -q .body || echo "")
+          
+          # Generate latest.json
+          cat > latest.json << EOF
+          {
+            "version": "${TAG_NAME#v}",
+            "notes": $(echo "$NOTES" | jq -Rs .),
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "linux-x86_64": {
+                "url": "https://github.com/joshuadavidthomas/dashtext/releases/download/${TAG_NAME}/${TARBALL_NAME}",
+                "sha256": "${SHA256}",
+                "signature": "${SIGNATURE}"
+              }
+            }
+          }
+          EOF
+
       - name: Upload release assets to GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
           gh release upload "${TAG_NAME}" \
+            latest.json \
             bundle-deb/*.deb \
             bundle-deb/*.sha256 \
             bundle-appimage/*.AppImage \
@@ -51,5 +85,6 @@ jobs:
             bundle-rpm/*.rpm \
             bundle-rpm/*.sha256 \
             bundle-tar/*.tar.gz \
+            bundle-tar/*.tar.gz.minisig \
             bundle-tar/*.sha256
 
