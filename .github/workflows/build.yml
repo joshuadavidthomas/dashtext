@@ -32,6 +32,9 @@ on:
       MINISIGN_SECRET_KEY:
         description: Minisign secret key for signing update tarballs
         required: false
+      MINISIGN_PASSWORD:
+        description: Password for the minisign secret key
+        required: false
   workflow_dispatch:
 
 concurrency:
@@ -127,10 +130,11 @@ jobs:
         working-directory: src-tauri/target/release/bundle
         env:
           MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
         run: |
           echo "$MINISIGN_SECRET_KEY" > /tmp/minisign.key
           for f in *.tar.gz; do
-            minisign -Sm "$f" -s /tmp/minisign.key -t "dashtext release"
+            echo "$MINISIGN_PASSWORD" | minisign -Sm "$f" -s /tmp/minisign.key -t "dashtext release" -W
           done
           rm /tmp/minisign.key
 
