@@ -98,17 +98,10 @@
 
   // Action for editor initialization
   function initEditor(container: HTMLDivElement) {
+    // Validation is handled by parent component (+page.svelte)
     const callbacks = {
-      onSubmitClose: () => {
-        if (content.trim()) {
-          onSubmitClose();
-        }
-      },
-      onSubmitContinue: () => {
-        if (content.trim()) {
-          onSubmitContinue();
-        }
-      },
+      onSubmitClose,
+      onSubmitContinue,
       onClose
     };
 
@@ -153,15 +146,4 @@
   }
 </script>
 
-<div use:initEditor class="capture-editor-container" role="textbox" aria-label="Quick capture editor"></div>
-
-<style>
-  .capture-editor-container {
-    width: 100%;
-    height: 100%;
-  }
-
-  .capture-editor-container :global(.cm-editor) {
-    height: 100%;
-  }
-</style>
+<div use:initEditor class="h-full w-full [&_.cm-editor]:h-full" role="textbox" aria-label="Quick capture editor"></div>

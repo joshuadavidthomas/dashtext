@@ -21,16 +21,22 @@
 
 	// Refresh drafts when window gains focus (e.g., after using quick capture)
 	$effect(() => {
-		const unlistenPromise = getCurrentWindow().onFocusChanged(({ payload: focused }) => {
-			if (focused) {
-				listDrafts().then((fresh) => {
-					draftsState.drafts = fresh;
-				});
-			}
-		});
+		let unlisten: (() => void) | null = null;
+
+		getCurrentWindow()
+			.onFocusChanged(({ payload: focused }) => {
+				if (focused) {
+					listDrafts().then((fresh) => {
+						draftsState.drafts = fresh;
+					});
+				}
+			})
+			.then((fn) => {
+				unlisten = fn;
+			});
 
 		return () => {
-			unlistenPromise.then((unlisten) => unlisten());
+			unlisten?.();
 		};
 	});
 </script>

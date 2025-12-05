@@ -1,5 +1,4 @@
 import { type Extension } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
 import { Vim } from '@replit/codemirror-vim';
 import { createBaseExtensions } from '$lib/components/editor/extensions';
 import { vim } from '@replit/codemirror-vim';
@@ -11,10 +10,12 @@ export interface CaptureCallbacks {
 }
 
 // Track if we need to set up the vim commands (only once globally)
+// Note: Vim commands are global and can't be unregistered, so we register once
 let vimCommandsRegistered = false;
 
 // Store callbacks globally so vim commands can access them
 // This is necessary because Vim.defineEx doesn't have a way to pass context
+// Safe because we enforce single capture window in openQuickCapture()
 let activeCallbacks: CaptureCallbacks | null = null;
 
 export function setActiveCallbacks(callbacks: CaptureCallbacks | null) {
@@ -62,29 +63,7 @@ export function createCaptureExtensions(callbacks: CaptureCallbacks): Extension[
     vim(),
 
     // Base extensions (markdown, history, theme, etc.)
-    ...createBaseExtensions(),
-
-    // Handle double-Escape to close (when already in normal mode)
-    // We track the last Escape time and close if pressed twice quickly
-    EditorView.domEventHandlers({
-      keydown: (event) => {
-        if (event.key === 'Escape') {
-          // Check if we're in normal mode by looking at the vim state
-          // If the previous key was also Escape within 500ms, close
-          const now = Date.now();
-          const lastEscape = (window as unknown as { __captureLastEscape?: number }).__captureLastEscape || 0;
-
-          if (now - lastEscape < 500) {
-            // Double escape - close the window
-            callbacks.onClose();
-            (window as unknown as { __captureLastEscape?: number }).__captureLastEscape = 0;
-            return true;
-          }
-
-          (window as unknown as { __captureLastEscape?: number }).__captureLastEscape = now;
-        }
-        return false;
-      }
-    })
+    // Note: Double-escape to close is handled at document level in +page.svelte
+    ...createBaseExtensions()
   ];
 }
