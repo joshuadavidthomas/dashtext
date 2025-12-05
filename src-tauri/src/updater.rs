@@ -12,13 +12,15 @@ use tauri::{AppHandle, Emitter};
 const UPDATE_MANIFEST_URL: &str =
     "https://github.com/joshuadavidthomas/dashtext/releases/latest/download/latest.json";
 
+/// Minisign public key for verifying update signatures
+const UPDATE_PUBLIC_KEY: &str = "RWShIod1Hid9Pszyt9kgjV0pvnWmO2lxd2BLvadhh2JfOM67NmdKDhw/";
+
 /// Platform info from latest.json
 #[derive(Debug, Clone, Deserialize)]
 pub struct PlatformInfo {
     pub url: String,
     pub sha256: String,
     #[serde(default)]
-    #[allow(dead_code)]
     pub signature: Option<String>,
 }
 
@@ -29,7 +31,6 @@ pub struct UpdateManifest {
     #[serde(default)]
     pub notes: Option<String>,
     #[serde(default)]
-    #[allow(dead_code)]
     pub pub_date: Option<String>,
     pub platforms: HashMap<String, PlatformInfo>,
 }
@@ -203,6 +204,27 @@ fn verify_binary(path: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
+/// Verify minisign signature of downloaded file
+fn verify_signature(file_path: &PathBuf, signature: &str) -> Result<(), String> {
+    use minisign_verify::{PublicKey, Signature};
+
+    // Parse the public key
+    let pk = PublicKey::from_base64(UPDATE_PUBLIC_KEY)
+        .map_err(|e| format!("Invalid public key: {}", e))?;
+
+    // Parse the signature
+    let sig = Signature::decode(signature)
+        .map_err(|e| format!("Invalid signature format: {}", e))?;
+
+    // Read the file
+    let data = fs::read(file_path)
+        .map_err(|e| format!("Failed to read file for signature verification: {}", e))?;
+
+    // Verify
+    pk.verify(&data, &sig, false)
+        .map_err(|_| "Signature verification failed - update may be tampered".to_string())
+}
+
 /// Verify the SHA256 checksum of a file
 fn verify_checksum(file_path: &PathBuf, expected_sha256: &str) -> Result<(), String> {
     let mut file =
@@ -338,7 +360,14 @@ pub async fn download_and_install_update(app: AppHandle) -> Result<(), String> {
     // Download the update
     download_file(&app, &platform_info.url, &tarball_path).await?;
 
-    // Verify checksum
+    // Verify signature (authenticity)
+    let signature = platform_info
+        .signature
+        .as_ref()
+        .ok_or_else(|| "Update missing signature - refusing to install unsigned update".to_string())?;
+    verify_signature(&tarball_path, signature)?;
+
+    // Verify checksum (integrity)
     verify_checksum(&tarball_path, &platform_info.sha256)?;
 
     // Extract the tarball

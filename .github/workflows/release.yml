@@ -22,6 +22,7 @@ jobs:
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
     with:
       version: ${{ github.ref_name }}
       sign: true
@@ -48,6 +49,9 @@ jobs:
           TARBALL_NAME=$(basename "$TARBALL")
           SHA256=$(sha256sum "$TARBALL" | cut -d' ' -f1)
           
+          # Read the minisign signature (just the base64 line, not the comment)
+          SIGNATURE=$(tail -1 "${TARBALL}.minisig")
+          
           # Get release notes from GitHub
           NOTES=$(gh release view "$TAG_NAME" --json body -q .body || echo "")
           
@@ -60,7 +64,8 @@ jobs:
             "platforms": {
               "linux-x86_64": {
                 "url": "https://github.com/joshuadavidthomas/dashtext/releases/download/${TAG_NAME}/${TARBALL_NAME}",
-                "sha256": "${SHA256}"
+                "sha256": "${SHA256}",
+                "signature": "${SIGNATURE}"
               }
             }
           }
@@ -80,5 +85,6 @@ jobs:
             bundle-rpm/*.rpm \
             bundle-rpm/*.sha256 \
             bundle-tar/*.tar.gz \
+            bundle-tar/*.tar.gz.minisig \
             bundle-tar/*.sha256
 
