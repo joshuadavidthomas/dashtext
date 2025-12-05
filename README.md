@@ -10,6 +10,7 @@ Currently focused on fast draft capture with vim-style editing. Processing and a
 
 ## Features
 
+- Quick capture window for rapid note-taking
 - Vim keybindings (via CodeMirror 6)
 - Local SQLite storage for drafts
 - Sidebar with draft list and previews
@@ -60,7 +61,7 @@ There's no icon yet. If you'd like one, [Icon Kitchen](https://icon.kitchen/) ca
 
 ## Roadmap
 
-- [ ] Tray icon with quick capture window
+- [ ] Tray icon / global hotkey for quick capture
 - [ ] Draft actions/processing (similar to Drafts)
 - [ ] Built-in actions for common workflows
 - [ ] Scripting support for custom actions
