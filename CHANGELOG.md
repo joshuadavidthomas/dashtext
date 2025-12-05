@@ -18,6 +18,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Added
+
+- Quick capture window for rapid note-taking
+
 ## [0.2.0]
 
 ### Added

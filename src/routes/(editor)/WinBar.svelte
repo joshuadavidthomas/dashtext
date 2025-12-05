@@ -6,7 +6,8 @@
 	import { deleteDraft } from '$lib/api';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
 	import { goto } from '$app/navigation';
-	import { Minus, PanelLeft, Plus, Square, Trash2, X } from '@lucide/svelte';
+	import { Minus, PanelLeft, Plus, Square, Trash2, X, Zap } from '@lucide/svelte';
+	import { openQuickCapture } from '$lib/components/capture';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 	const appWindow = getCurrentWindow();
@@ -102,6 +103,23 @@
 						{/snippet}
 					</Tooltip.Trigger>
 					<Tooltip.Content side="bottom">Delete draft</Tooltip.Content>
+				</Tooltip.Root>
+
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="toolbar"
+								size="icon-sm"
+								onclick={openQuickCapture}
+								aria-label="Quick capture"
+							>
+								<Zap class="size-3.5" />
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">Quick capture</Tooltip.Content>
 				</Tooltip.Root>
 			</AppBar.Section>
 
