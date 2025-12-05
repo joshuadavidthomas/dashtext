@@ -1,0 +1,20 @@
+# Cloudflare Pages configuration for Dashtext web version
+# Deploy with: bun run deploy:web
+
+name = "dashtext"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages-specific settings
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# Future: Add D1 database for sync
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "dashtext"
+# database_id = "<your-database-id>"
+
+# Future: Add KV for caching/sessions
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "<your-kv-id>"
