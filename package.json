@@ -14,7 +14,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri",
     "screenshots": "playwright test --project=screenshots",
-    "deploy:web": "BUILD_TARGET=web vite build && wrangler pages deploy .svelte-kit/cloudflare"
+    "deploy:web": "BUILD_TARGET=web vite build && wrangler deploy"
   },
   "license": "Apache-2.0",
   "dependencies": {
