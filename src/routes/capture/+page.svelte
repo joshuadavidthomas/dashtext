@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { getCurrentWindow } from '@tauri-apps/api/window';
   import { createDraft, saveDraft } from '$lib/api';
   import { CaptureEditor } from '$lib/components/capture';
   import { VimModeIndicator } from '$lib/components/editor';
+  import { isTauri } from '$lib/platform';
+  import { goto } from '$app/navigation';
+
+  const inTauri = isTauri();
 
   let saving = $state(false);
   let contentGetter: (() => string) | null = $state(null);
@@ -16,6 +19,16 @@
     editorClearer?.();
   }
 
+  async function closeCapture() {
+    if (inTauri) {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().close();
+    } else {
+      // On web, navigate back to main editor
+      goto('/drafts/new');
+    }
+  }
+
   async function handleSubmitClose() {
     const content = getContent();
     if (!content.trim() || saving) return;
@@ -24,7 +37,12 @@
     try {
       const draft = await createDraft();
       await saveDraft(draft.id, content.trim());
-      await getCurrentWindow().close();
+      if (inTauri) {
+        await closeCapture();
+      } else {
+        // On web, navigate to the newly created draft
+        goto(`/drafts/${draft.id}`);
+      }
     } finally {
       saving = false;
     }
@@ -45,7 +63,7 @@
   }
 
   async function handleClose() {
-    await getCurrentWindow().close();
+    await closeCapture();
   }
 
   // Document-level double-escape handler (works even when editor isn't focused)

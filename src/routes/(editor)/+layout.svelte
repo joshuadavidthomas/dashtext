@@ -1,51 +1,67 @@
 <script lang="ts">
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { UpdateDialog } from '$lib/components/updater';
 	import { listDrafts } from '$lib/api';
 	import { createDraftsState } from '$lib/stores/drafts.svelte';
-	import { createUpdaterState } from '$lib/stores/updater.svelte';
+	import { isTauri } from '$lib/platform';
 	import StatusLine from './StatusLine.svelte';
 	import WinBar from './WinBar.svelte';
 
 	let { data, children } = $props();
 
-	// Check if running in Tauri
-	const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+	const inTauri = isTauri();
 
 	createEditorContext();
 	const draftsState = createDraftsState(() => data.drafts);
-	const updater = createUpdaterState();
 
+	// Initialize updater only in Tauri (dynamic import to avoid Tauri deps on web)
 	$effect(() => {
-		if (isTauri) {
+		if (!inTauri) return;
+
+		import('$lib/stores/updater.svelte').then(({ createUpdaterState }) => {
+			const updater = createUpdaterState();
 			updater.init();
-		}
+		});
 	});
 
 	// Refresh drafts when window gains focus (e.g., after using quick capture)
+	// On web, use visibilitychange event instead
 	$effect(() => {
-		if (!isTauri) return;
+		if (inTauri) {
+			let unlisten: (() => void) | null = null;
 
-		let unlisten: (() => void) | null = null;
+			import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+				getCurrentWindow()
+					.onFocusChanged(({ payload: focused }) => {
+						if (focused) {
+							listDrafts().then((fresh) => {
+								draftsState.drafts = fresh;
+							});
+						}
+					})
+					.then((fn) => {
+						unlisten = fn;
+					});
+			});
 
-		import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
-			getCurrentWindow()
-				.onFocusChanged(({ payload: focused }) => {
-					if (focused) {
-						listDrafts().then((fresh) => {
-							draftsState.drafts = fresh;
-						});
-					}
-				})
-				.then((fn) => {
-					unlisten = fn;
-				});
-		});
+			return () => {
+				unlisten?.();
+			};
+		} else {
+			// Web: refresh on visibility change
+			const handleVisibility = () => {
+				if (document.visibilityState === 'visible') {
+					listDrafts().then((fresh) => {
+						draftsState.drafts = fresh;
+					});
+				}
+			};
 
-		return () => {
-			unlisten?.();
-		};
+			document.addEventListener('visibilitychange', handleVisibility);
+			return () => {
+				document.removeEventListener('visibilitychange', handleVisibility);
+			};
+		}
 	});
 </script>
 
@@ -95,7 +111,9 @@
 		</aside>
 		<StatusLine />
 	</div>
-	{#if isTauri}
-		<UpdateDialog />
+	{#if inTauri}
+		{#await import('$lib/components/updater') then { UpdateDialog }}
+			<UpdateDialog />
+		{/await}
 	{/if}
 </Sidebar.Provider>

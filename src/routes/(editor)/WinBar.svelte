@@ -5,11 +5,11 @@
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { deleteDraft } from '$lib/api';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
+	import { isTauri } from '$lib/platform';
 	import { goto } from '$app/navigation';
 	import { PanelLeft, Plus, Trash2, Zap } from '@lucide/svelte';
 
-	// Check if running in Tauri
-	const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+	const inTauri = isTauri();
 
 	const sidebar = useSidebar();
 	const draftsState = getDraftsState();
@@ -36,7 +36,7 @@
 	}
 
 	async function handleQuickCapture() {
-		if (isTauri) {
+		if (inTauri) {
 			// Open in new Tauri window
 			const { openQuickCapture } = await import('$lib/components/capture');
 			await openQuickCapture();
@@ -123,7 +123,7 @@
 			</AppBar.Section>
 
 			<AppBar.Section style="-webkit-app-region: no-drag;">
-				{#if isTauri}
+				{#if inTauri}
 					{#await import('./WindowControls.svelte') then { default: WindowControls }}
 						<WindowControls />
 					{/await}
