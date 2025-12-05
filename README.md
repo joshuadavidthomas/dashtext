@@ -1,6 +1,6 @@
 # DashText
 
-A cross-platform text editor for capturing drafts, inspired by [Drafts](https://getdrafts.com/).
+A text editor for quick capture, inspired by [Drafts](https://getdrafts.com/).
 
 ## About
 
@@ -55,7 +55,7 @@ Optionally, create a desktop entry at `~/.local/share/applications/dashtext.desk
 ```ini
 [Desktop Entry]
 Name=DashText
-Comment=A cross-platform text editor for capturing drafts
+Comment=A text editor for quick capture
 Exec=dashtext
 Type=Application
 Categories=Utility;TextEditor;
