@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { UpdateDialog } from '$lib/components/updater';
@@ -11,29 +10,38 @@
 
 	let { data, children } = $props();
 
+	// Check if running in Tauri
+	const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 	createEditorContext();
 	const draftsState = createDraftsState(() => data.drafts);
 	const updater = createUpdaterState();
 
 	$effect(() => {
-		updater.init();
+		if (isTauri) {
+			updater.init();
+		}
 	});
 
 	// Refresh drafts when window gains focus (e.g., after using quick capture)
 	$effect(() => {
+		if (!isTauri) return;
+
 		let unlisten: (() => void) | null = null;
 
-		getCurrentWindow()
-			.onFocusChanged(({ payload: focused }) => {
-				if (focused) {
-					listDrafts().then((fresh) => {
-						draftsState.drafts = fresh;
-					});
-				}
-			})
-			.then((fn) => {
-				unlisten = fn;
-			});
+		import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+			getCurrentWindow()
+				.onFocusChanged(({ payload: focused }) => {
+					if (focused) {
+						listDrafts().then((fresh) => {
+							draftsState.drafts = fresh;
+						});
+					}
+				})
+				.then((fn) => {
+					unlisten = fn;
+				});
+		});
 
 		return () => {
 			unlisten?.();
@@ -87,5 +95,7 @@
 		</aside>
 		<StatusLine />
 	</div>
-	<UpdateDialog />
+	{#if isTauri}
+		<UpdateDialog />
+	{/if}
 </Sidebar.Provider>

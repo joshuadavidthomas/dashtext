@@ -6,27 +6,15 @@
 	import { deleteDraft } from '$lib/api';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
 	import { goto } from '$app/navigation';
-	import { Minus, PanelLeft, Plus, Square, Trash2, X, Zap } from '@lucide/svelte';
-	import { openQuickCapture } from '$lib/components/capture';
-	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import { PanelLeft, Plus, Trash2, Zap } from '@lucide/svelte';
 
-	const appWindow = getCurrentWindow();
+	// Check if running in Tauri
+	const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 	const sidebar = useSidebar();
 	const draftsState = getDraftsState();
 
 	const currentDraftId = $derived(draftsState.currentDraft?.id ?? null);
-
-	async function minimize() {
-		await appWindow.minimize();
-	}
-
-	async function toggleMaximize() {
-		await appWindow.toggleMaximize();
-	}
-
-	async function close() {
-		await appWindow.close();
-	}
 
 	function handleNew() {
 		goto('/drafts/new');
@@ -44,6 +32,17 @@
 			goto(`/drafts/${draftsState.drafts[0].id}`);
 		} else {
 			goto('/drafts/new');
+		}
+	}
+
+	async function handleQuickCapture() {
+		if (isTauri) {
+			// Open in new Tauri window
+			const { openQuickCapture } = await import('$lib/components/capture');
+			await openQuickCapture();
+		} else {
+			// Navigate to capture route in browser
+			goto('/capture');
 		}
 	}
 </script>
@@ -112,7 +111,7 @@
 								{...props}
 								variant="toolbar"
 								size="icon-sm"
-								onclick={openQuickCapture}
+								onclick={handleQuickCapture}
 								aria-label="Quick capture"
 							>
 								<Zap class="size-3.5" />
@@ -124,56 +123,11 @@
 			</AppBar.Section>
 
 			<AppBar.Section style="-webkit-app-region: no-drag;">
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="toolbar-minimize"
-								size="icon-sm"
-								onclick={minimize}
-								aria-label="Minimize"
-							>
-								<Minus class="size-3.5" />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content side="bottom">Minimize</Tooltip.Content>
-				</Tooltip.Root>
-
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="toolbar-maximize"
-								size="icon-sm"
-								onclick={toggleMaximize}
-								aria-label="Maximize"
-							>
-								<Square class="size-3" />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content side="bottom">Maximize</Tooltip.Content>
-				</Tooltip.Root>
-
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="toolbar-close"
-								size="icon-sm"
-								onclick={close}
-								aria-label="Close"
-							>
-								<X class="size-3.5" />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content side="bottom">Close</Tooltip.Content>
-				</Tooltip.Root>
+				{#if isTauri}
+					{#await import('./WindowControls.svelte') then { default: WindowControls }}
+						<WindowControls />
+					{/await}
+				{/if}
 			</AppBar.Section>
 	</AppBar.Root>
 </Tooltip.Provider>

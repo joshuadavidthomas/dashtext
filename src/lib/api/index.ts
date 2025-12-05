@@ -22,7 +22,9 @@ async function getBackend(): Promise<DraftAPI> {
     const { tauriBackend } = await import('./backends/tauri');
     backend = tauriBackend;
   } else {
-    throw new Error('No backend available - not running in Tauri environment');
+    // Use mock backend for browser testing (e.g., Playwright)
+    const { mockBackend } = await import('./backends/mock');
+    backend = mockBackend;
   }
 
   return backend;
