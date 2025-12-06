@@ -2,6 +2,7 @@
 	import * as AppBar from '$lib/components/appbar';
 	import { getEditorContext, VimModeIndicator } from '$lib/components/editor';
 	import { VersionIndicator } from '$lib/components/updater';
+	import { isTauri } from '$lib/platform';
 
 	const editor = getEditorContext();
 
@@ -15,7 +16,9 @@
 <AppBar.Root as="footer" data-layout="footer-bar" class="bg-[var(--cm-statusline-bg)] font-mono text-xs">
 	<AppBar.Section>
 		<VimModeIndicator />
-		<VersionIndicator />
+		{#if isTauri()}
+			<VersionIndicator />
+		{/if}
 	</AppBar.Section>
 
 	<AppBar.Section class="text-[var(--cm-statusline-fg)]">
