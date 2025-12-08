@@ -6,7 +6,7 @@
   import { useSidebar } from '@dashtext/lib/sidebar';
   import { getDraftsState } from '@dashtext/lib/stores';
   import * as Tooltip from '@dashtext/lib/tooltip';
-  import { PanelLeft, Plus, Trash2, Zap } from '@lucide/svelte';
+  import { PanelLeft, Plus, Trash2 } from '@lucide/svelte';
 
   const sidebar = useSidebar();
   const draftsState = getDraftsState();
@@ -28,10 +28,6 @@
     } else {
       goto('/drafts/new');
     }
-  }
-
-  function handleQuickCapture() {
-    goto('/capture');
   }
 </script>
 
@@ -91,27 +87,6 @@
           </Tooltip.Trigger>
           <Tooltip.Content side="bottom">Delete draft</Tooltip.Content>
         </Tooltip.Root>
-
-        <Tooltip.Root>
-          <Tooltip.Trigger>
-            {#snippet child({ props })}
-              <Button
-                {...props}
-                variant="toolbar"
-                size="icon-sm"
-                onclick={handleQuickCapture}
-                aria-label="Quick capture"
-              >
-                <Zap class="size-3.5" />
-              </Button>
-            {/snippet}
-          </Tooltip.Trigger>
-          <Tooltip.Content side="bottom">Quick capture</Tooltip.Content>
-        </Tooltip.Root>
-      </AppBar.Section>
-
-      <AppBar.Section>
-        <!-- No window controls on web -->
       </AppBar.Section>
   </AppBar.Root>
 </Tooltip.Provider>

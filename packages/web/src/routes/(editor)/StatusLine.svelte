@@ -14,9 +14,6 @@
 <AppBar.Root as="footer" data-layout="footer-bar" class="bg-[var(--cm-statusline-bg)] font-mono text-xs">
   <AppBar.Section>
     <VimModeIndicator />
-    <span class="flex items-center gap-1 px-2 py-0.5 text-xs text-[var(--cm-statusline-fg)]">
-      v{__APP_VERSION__}
-    </span>
   </AppBar.Section>
 
   <AppBar.Section class="text-[var(--cm-statusline-fg)]">
