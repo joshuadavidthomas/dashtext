@@ -87,11 +87,11 @@
     "@replit/codemirror-vim": "catalog:",
     "@tailwindcss/forms": "catalog:",
     "@tailwindcss/typography": "catalog:",
-    "bits-ui": "^2.11.0",
+    "bits-ui": "catalog:",
     "clsx": "catalog:",
     "runed": "catalog:",
     "tailwind-merge": "catalog:",
-    "tailwind-variants": "^3.1.1",
+    "tailwind-variants": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:"
   },
@@ -99,8 +99,8 @@
     "svelte": "^5.0.0"
   },
   "devDependencies": {
-    "@internationalized/date": "^3.8.1",
-    "@lucide/svelte": "^0.544.0",
+    "@internationalized/date": "catalog:",
+    "@lucide/svelte": "catalog:",
     "svelte": "catalog:",
     "svelte-check": "catalog:",
     "typescript": "catalog:"

@@ -10,6 +10,7 @@
       "@codemirror/language-data": "^6.5.2",
       "@codemirror/state": "^6.5.2",
       "@codemirror/view": "^6.38.8",
+      "@internationalized/date": "^3.8.1",
       "@lezer/highlight": "^1.2.3",
       "@lucide/svelte": "^0.555.0",
       "@playwright/test": "^1.49.1",
