@@ -47,7 +47,7 @@
     }
   },
   "scripts": {
-    "build:desktop": "bun --filter @dashtext/desktop build",
+    "build:desktop": "bun --filter @dashtext/desktop tauri build",
     "build:web": "bun --filter @dashtext/web build",
     "check": "bun --filter '*' check",
     "dev:desktop": "bun --filter @dashtext/desktop tauri dev",
