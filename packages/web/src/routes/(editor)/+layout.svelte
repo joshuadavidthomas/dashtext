@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEditorContext } from '@dashtext/lib/editor';
-  import * as Sidebar from '@dashtext/ui/sidebar';
+  import * as Sidebar from '@dashtext/lib/sidebar';
   import { listDrafts, createDraft, saveDraft } from '$lib/api';
   import { createDraftsState, type DraftsAPI } from '@dashtext/lib/stores';
   import { replaceState } from '$app/navigation';

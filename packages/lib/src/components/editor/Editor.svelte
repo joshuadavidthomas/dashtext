@@ -4,7 +4,7 @@
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
-	import { getDraftsState } from '../stores/drafts.svelte';
+	import { getDraftsState } from '../../stores/drafts.svelte';
 
 	const draftsState = getDraftsState();
 	const editorState = getEditorContext();

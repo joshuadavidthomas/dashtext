@@ -1,8 +1,8 @@
 <script lang="ts">
-  import * as AppBar from '@dashtext/ui/appbar';
-  import { Button } from '@dashtext/ui/button';
-  import { useSidebar } from '@dashtext/ui/sidebar';
-  import * as Tooltip from '@dashtext/ui/tooltip';
+  import * as AppBar from '@dashtext/lib/appbar';
+  import { Button } from '@dashtext/lib/button';
+  import { useSidebar } from '@dashtext/lib/sidebar';
+  import * as Tooltip from '@dashtext/lib/tooltip';
   import { deleteDraft } from '$lib/api';
   import { getDraftsState } from '@dashtext/lib/stores';
   import { goto } from '$app/navigation';
@@ -35,8 +35,7 @@
   }
 </script>
 
-<Tooltip.Provider delayDuration={300}>
-  <AppBar.Root as="header" data-layout="menu-bar" class="gap-1 bg-[var(--cm-background-dark)] p-1">
+<AppBar.Root as="header" data-layout="menu-bar" class="gap-1 bg-[var(--cm-background-dark)] p-1">
     <AppBar.Section>
       <Tooltip.Root>
         <Tooltip.Trigger>
@@ -113,5 +112,4 @@
     <AppBar.Section>
       <!-- No window controls on web -->
     </AppBar.Section>
-  </AppBar.Root>
-</Tooltip.Provider>
+</AppBar.Root>

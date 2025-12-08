@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button } from '@dashtext/ui/button';
-	import * as Tooltip from '@dashtext/ui/tooltip';
+	import { Button } from '@dashtext/lib/button';
+	import * as Tooltip from '@dashtext/lib/tooltip';
 	import { Minus, Square, X } from '@lucide/svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 

@@ -3,13 +3,13 @@
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
-    "dev:desktop": "bun --filter @dashtext/desktop dev",
-    "dev:web": "bun --filter @dashtext/web dev",
     "build:desktop": "bun --filter @dashtext/desktop build",
     "build:web": "bun --filter @dashtext/web build",
-    "tauri": "bun --filter @dashtext/desktop tauri",
     "check": "bun --filter '*' check",
-    "screenshots": "bun --filter @dashtext/desktop screenshots"
+    "dev:desktop": "bun --filter @dashtext/desktop tauri dev",
+    "dev:web": "bun --filter @dashtext/web dev",
+    "screenshots": "bun --filter @dashtext/desktop screenshots",
+    "tauri": "bun --filter @dashtext/desktop tauri"
   },
   "devDependencies": {
     "typescript": "~5.9.3"

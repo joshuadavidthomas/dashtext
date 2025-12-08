@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Tooltip from '@dashtext/ui/tooltip';
+  import * as Tooltip from '@dashtext/lib/tooltip';
   import { getUpdaterState } from '$lib/stores/updater.svelte';
 
   const updater = getUpdaterState();

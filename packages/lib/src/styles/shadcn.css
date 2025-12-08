@@ -1,0 +1,88 @@
+/* shadcn-svelte design tokens */
+/* Maps from semantic tokens (--cm-*) to shadcn conventions */
+
+:root {
+  --radius: 0;
+  
+  /* Core colors - map to semantic tokens */
+  --background: var(--cm-background);
+  --foreground: var(--cm-foreground);
+  
+  /* Card */
+  --card: var(--cm-background-dark);
+  --card-foreground: var(--cm-foreground);
+  
+  /* Popover */
+  --popover: var(--cm-background-dark);
+  --popover-foreground: var(--cm-foreground);
+  
+  /* Primary */
+  --primary: var(--cm-accent);
+  --primary-foreground: var(--cm-accent-foreground);
+  
+  /* Secondary */
+  --secondary: var(--cm-background-highlight);
+  --secondary-foreground: var(--cm-foreground);
+  
+  /* Muted */
+  --muted: var(--cm-background-highlight);
+  --muted-foreground: var(--cm-foreground-dark);
+  
+  /* Accent */
+  --accent: var(--cm-background-highlight);
+  --accent-foreground: var(--cm-foreground);
+  
+  /* Destructive */
+  --destructive: var(--cm-error);
+  
+  /* Border/Input/Ring */
+  --border: var(--cm-gutter-foreground);
+  --input: var(--cm-background-highlight);
+  --ring: var(--cm-accent);
+  
+  /* Sidebar */
+  --sidebar: var(--cm-background-dark);
+  --sidebar-foreground: var(--cm-foreground);
+  --sidebar-primary: var(--cm-accent);
+  --sidebar-primary-foreground: var(--cm-accent-foreground);
+  --sidebar-accent: var(--cm-background-highlight);
+  --sidebar-accent-foreground: var(--cm-foreground);
+  --sidebar-border: var(--cm-gutter-foreground);
+  --sidebar-ring: var(--cm-accent);
+}
+
+/* Register colors for Tailwind utilities */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@custom-variant dark (&:is(.dark *));

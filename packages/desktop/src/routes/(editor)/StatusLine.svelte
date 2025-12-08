@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as AppBar from '@dashtext/ui/appbar';
+	import * as AppBar from '@dashtext/lib/appbar';
 	import { getEditorContext, VimModeIndicator } from '@dashtext/lib/editor';
 	import { VersionIndicator } from '$lib/components/updater';
 

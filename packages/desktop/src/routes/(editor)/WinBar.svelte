@@ -1,8 +1,8 @@
 <script lang="ts">
-	import * as AppBar from '@dashtext/ui/appbar';
-	import { Button } from '@dashtext/ui/button';
-	import { useSidebar } from '@dashtext/ui/sidebar';
-	import * as Tooltip from '@dashtext/ui/tooltip';
+	import * as AppBar from '@dashtext/lib/appbar';
+	import { Button } from '@dashtext/lib/button';
+	import { useSidebar } from '@dashtext/lib/sidebar';
+	import * as Tooltip from '@dashtext/lib/tooltip';
 	import { deleteDraft } from '$lib/api';
 	import { getDraftsState } from '@dashtext/lib/stores';
 	import { openQuickCapture } from '$lib/components/capture';
@@ -39,8 +39,7 @@
 	}
 </script>
 
-<Tooltip.Provider delayDuration={300}>
-	<AppBar.Root as="header" data-layout="menu-bar" data-tauri-drag-region class="gap-1 bg-[var(--cm-background-dark)] p-1">
+<AppBar.Root as="header" data-layout="menu-bar" data-tauri-drag-region class="gap-1 bg-[var(--cm-background-dark)] p-1">
 			<AppBar.Section style="-webkit-app-region: no-drag;">
 				<Tooltip.Root>
 					<Tooltip.Trigger>
@@ -114,8 +113,7 @@
 				</Tooltip.Root>
 			</AppBar.Section>
 
-			<AppBar.Section style="-webkit-app-region: no-drag;">
-				<WindowControls />
-			</AppBar.Section>
-	</AppBar.Root>
-</Tooltip.Provider>
+		<AppBar.Section style="-webkit-app-region: no-drag;">
+			<WindowControls />
+		</AppBar.Section>
+</AppBar.Root>

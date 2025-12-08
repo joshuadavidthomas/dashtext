@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as Dialog from '@dashtext/ui/dialog';
-  import { Button } from '@dashtext/ui/button';
+  import * as Dialog from '@dashtext/lib/dialog';
+  import { Button } from '@dashtext/lib/button';
   import { getUpdaterState } from '$lib/stores/updater.svelte';
 
   const updater = getUpdaterState();

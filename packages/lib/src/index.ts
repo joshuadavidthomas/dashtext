@@ -5,4 +5,7 @@ export * from "./api";
 export * from "./stores";
 
 // Editor
-export * from "./editor";
+export * from "./components/editor";
+
+// Utils
+export * from "./utils";
