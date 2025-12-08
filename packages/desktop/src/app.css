@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* Order matters: tokyonight defines colors -> codemirror uses them -> base/layout use codemirror vars */
+@import "@dashtext/ui/styles/tokyonight_day.css";
+@import "@dashtext/ui/styles/tokyonight_moon.css";
+@import "@dashtext/ui/styles/codemirror.css";
+@import "@dashtext/ui/styles/base.css";
+@import "@dashtext/ui/styles/layout.css";

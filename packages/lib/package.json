@@ -1,0 +1,43 @@
+{
+  "name": "@dashtext/lib",
+  "version": "0.0.1",
+  "type": "module",
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./api": {
+      "types": "./src/api/index.ts",
+      "default": "./src/api/index.ts"
+    },
+    "./stores": {
+      "types": "./src/stores/index.ts",
+      "svelte": "./src/stores/index.ts"
+    },
+    "./editor": {
+      "types": "./src/editor/index.ts",
+      "svelte": "./src/editor/index.ts"
+    }
+  },
+  "files": ["src"],
+  "dependencies": {
+    "@codemirror/commands": "^6.10.0",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.8",
+    "@lezer/highlight": "^1.2.3",
+    "@replit/codemirror-vim": "^6.3.0",
+    "runed": "^0.37.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.45.3"
+  }
+}

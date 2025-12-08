@@ -1,0 +1,121 @@
+<script lang="ts">
+	import * as AppBar from '@dashtext/ui/appbar';
+	import { Button } from '@dashtext/ui/button';
+	import { useSidebar } from '@dashtext/ui/sidebar';
+	import * as Tooltip from '@dashtext/ui/tooltip';
+	import { deleteDraft } from '$lib/api';
+	import { getDraftsState } from '@dashtext/lib/stores';
+	import { openQuickCapture } from '$lib/components/capture';
+	import { goto } from '$app/navigation';
+	import { PanelLeft, Plus, Trash2, Zap } from '@lucide/svelte';
+	import WindowControls from './WindowControls.svelte';
+
+	const sidebar = useSidebar();
+	const draftsState = getDraftsState();
+
+	const currentDraftId = $derived(draftsState.currentDraft?.id ?? null);
+
+	function handleNew() {
+		goto('/drafts/new');
+	}
+
+	async function handleDelete() {
+		if (!currentDraftId) return;
+		await deleteDraft(currentDraftId);
+
+		// Update local state
+		draftsState.drafts = draftsState.drafts.filter((d) => d.id !== currentDraftId);
+
+		// Navigate to another draft or new
+		if (draftsState.drafts.length > 0) {
+			goto(`/drafts/${draftsState.drafts[0].id}`);
+		} else {
+			goto('/drafts/new');
+		}
+	}
+
+	async function handleQuickCapture() {
+		await openQuickCapture();
+	}
+</script>
+
+<Tooltip.Provider delayDuration={300}>
+	<AppBar.Root as="header" data-layout="menu-bar" data-tauri-drag-region class="gap-1 bg-[var(--cm-background-dark)] p-1">
+			<AppBar.Section style="-webkit-app-region: no-drag;">
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="toolbar"
+								size="icon-sm"
+								onclick={() => sidebar.toggle()}
+								aria-label="Toggle sidebar"
+								aria-pressed={sidebar.open}
+								class={sidebar.open ? 'text-[var(--cm-accent)]' : ''}
+							>
+								<PanelLeft class="size-3.5" />
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">Toggle sidebar (Ctrl+B)</Tooltip.Content>
+				</Tooltip.Root>
+
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="toolbar"
+								size="icon-sm"
+								onclick={handleNew}
+								aria-label="New draft"
+							>
+								<Plus class="size-3.5" />
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">New draft (Ctrl+N)</Tooltip.Content>
+				</Tooltip.Root>
+
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="toolbar"
+								size="icon-sm"
+								onclick={handleDelete}
+								disabled={!currentDraftId}
+								aria-label="Delete draft"
+							>
+								<Trash2 class="size-3.5" />
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">Delete draft</Tooltip.Content>
+				</Tooltip.Root>
+
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="toolbar"
+								size="icon-sm"
+								onclick={handleQuickCapture}
+								aria-label="Quick capture"
+							>
+								<Zap class="size-3.5" />
+							</Button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom">Quick capture</Tooltip.Content>
+				</Tooltip.Root>
+			</AppBar.Section>
+
+			<AppBar.Section style="-webkit-app-region: no-drag;">
+				<WindowControls />
+			</AppBar.Section>
+	</AppBar.Root>
+</Tooltip.Provider>
