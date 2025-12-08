@@ -1,3 +1,4 @@
+import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 export { default as CaptureEditor } from './CaptureEditor.svelte';
@@ -9,7 +10,7 @@ export async function openQuickCapture() {
     return existing;
   }
 
-  return new WebviewWindow('capture', {
+  const win = new WebviewWindow('capture', {
     url: '/capture',
     title: 'Quick Capture',
     width: 600,
@@ -17,8 +18,17 @@ export async function openQuickCapture() {
     decorations: false,
     alwaysOnTop: true,
     center: true,
-    focus: true,
+    visible: false, // Start hidden to prevent white flash
     resizable: true,
     skipTaskbar: true,
   });
+
+  // Listen for global event when page signals it's ready (CSS loaded and painted)
+  const unlisten = await listen('capture-ready', async () => {
+    await win.show();
+    await win.setFocus();
+    unlisten(); // Clean up listener
+  });
+
+  return win;
 }

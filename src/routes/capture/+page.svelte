@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { createDraft, saveDraft } from '$lib/api';
   import { CaptureEditor } from '$lib/components/capture';
   import { VimModeIndicator } from '$lib/components/editor';
@@ -6,6 +7,17 @@
   import { goto } from '$app/navigation';
 
   const inTauri = isTauri();
+
+  // Signal to the parent window that we're ready to be shown (prevents white flash)
+  onMount(() => {
+    if (inTauri) {
+      // Wait for first paint (CSS applied) before signaling ready
+      requestAnimationFrame(async () => {
+        const { emit } = await import('@tauri-apps/api/event');
+        await emit('capture-ready');
+      });
+    }
+  });
 
   let saving = $state(false);
   let contentGetter: (() => string) | null = $state(null);

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import * as AppBar from '$lib/components/appbar';
-	import { getEditorContext, VimModeIndicator } from '$lib/components/editor';
-	import { VersionIndicator } from '$lib/components/updater';
+	import { editorState, VimModeIndicator } from '$lib/components/editor';
 	import { isTauri } from '$lib/platform';
 
-	const editor = getEditorContext();
+	const editor = editorState;
 
 	function formatScroll(percent: number): string {
 		if (percent === 0) return 'Top';
@@ -17,7 +16,9 @@
 	<AppBar.Section>
 		<VimModeIndicator />
 		{#if isTauri()}
-			<VersionIndicator />
+			{#await import('$lib/components/updater') then { VersionIndicator }}
+				<VersionIndicator />
+			{/await}
 		{/if}
 	</AppBar.Section>
 

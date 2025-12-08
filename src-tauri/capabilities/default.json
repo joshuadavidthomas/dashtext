@@ -5,10 +5,12 @@
   "windows": ["main", "capture"],
   "permissions": [
     "core:default",
+    "core:event:default",
     "core:webview:allow-create-webview-window",
     "core:window:allow-close",
     "core:window:allow-set-focus",
     "core:window:allow-center",
+    "core:window:allow-show",
     "opener:default",
     "sql:allow-execute",
     "sql:default"

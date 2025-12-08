@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { createEditorContext } from '$lib/components/editor';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { listDrafts } from '$lib/api';
 	import { createDraftsState } from '$lib/stores/drafts.svelte';
+	import { createUpdaterState } from '$lib/stores/updater.svelte';
 	import { isTauri } from '$lib/platform';
 	import StatusLine from './StatusLine.svelte';
 	import WinBar from './WinBar.svelte';
@@ -11,17 +11,15 @@
 
 	const inTauri = isTauri();
 
-	createEditorContext();
 	const draftsState = createDraftsState(() => data.drafts);
 
-	// Initialize updater only in Tauri (dynamic import to avoid Tauri deps on web)
-	$effect(() => {
-		if (!inTauri) return;
+	// Create updater context synchronously (safe - no Tauri imports at module level)
+	// Only initialize in Tauri mode
+	const updater = inTauri ? createUpdaterState() : null;
 
-		import('$lib/stores/updater.svelte').then(({ createUpdaterState }) => {
-			const updater = createUpdaterState();
-			updater.init();
-		});
+	// Initialize updater async (Tauri APIs are dynamically imported inside init())
+	$effect(() => {
+		updater?.init();
 	});
 
 	// Refresh drafts when window gains focus (e.g., after using quick capture)

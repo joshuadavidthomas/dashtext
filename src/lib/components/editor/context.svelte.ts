@@ -1,5 +1,3 @@
-import { createContext } from 'svelte';
-
 export type VimModeType =
   | 'normal'
   | 'insert'
@@ -61,10 +59,8 @@ export class EditorState {
   }
 }
 
-export const [getEditorContext, setEditorContext] = createContext<EditorState>();
-
-export function createEditorContext(): EditorState {
-  const state = new EditorState();
-  setEditorContext(state);
-  return state;
-}
+/**
+ * Singleton editor state instance.
+ * Safe to use as module-level state since ssr = false (no server-side state bleeding).
+ */
+export const editorState = new EditorState();

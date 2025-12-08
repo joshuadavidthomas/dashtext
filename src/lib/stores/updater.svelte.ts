@@ -1,6 +1,5 @@
 import { createContext } from 'svelte';
-import { invoke } from '@tauri-apps/api/core';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import type { UnlistenFn } from '@tauri-apps/api/event';
 
 export type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
 
@@ -31,6 +30,9 @@ export class UpdaterState {
 	hasUpdate = $derived(this.status === 'available' || this.status === 'ready');
 
 	async init() {
+		const { invoke } = await import('@tauri-apps/api/core');
+		const { listen } = await import('@tauri-apps/api/event');
+
 		try {
 			// Get current version from backend
 			this.currentVersion = await invoke<string>('get_current_version');
@@ -68,6 +70,7 @@ export class UpdaterState {
 		this.error = null;
 
 		try {
+			const { invoke } = await import('@tauri-apps/api/core');
 			const update = await invoke<UpdateInfo | null>('check_update');
 			if (update) {
 				this.updateInfo = update;
@@ -90,6 +93,7 @@ export class UpdaterState {
 		this.error = null;
 
 		try {
+			const { invoke } = await import('@tauri-apps/api/core');
 			// Note: Our backend doesn't report progress yet, so we just show indeterminate
 			// Could be enhanced to use Tauri events for progress reporting
 			await invoke('download_and_install_update');
@@ -103,6 +107,7 @@ export class UpdaterState {
 
 	async restart() {
 		try {
+			const { invoke } = await import('@tauri-apps/api/core');
 			await invoke('restart_app');
 		} catch (e) {
 			// restart_app calls exec() which replaces the process

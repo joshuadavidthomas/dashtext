@@ -3,7 +3,7 @@
   import { EditorState } from '@codemirror/state';
   import { getCM } from '@replit/codemirror-vim';
   import { createCaptureExtensions, setActiveCallbacks } from './extensions';
-  import { getEditorContext, type VimModeType } from '$lib/components/editor/context.svelte';
+  import { editorState, type VimModeType } from '$lib/components/editor/context.svelte';
 
   interface Props {
     onSubmitClose: () => void;
@@ -20,8 +20,6 @@
     getContent,
     clearEditor
   }: Props = $props();
-
-  const editorState = getEditorContext();
 
   let view: EditorView | null = null;
   let content = $state('');
@@ -54,7 +52,7 @@
     if (!cm) return;
 
     vimModeChangeHandler = (event: { mode: string; subMode?: string }) => {
-      editorState.setVimMode(mapVimMode(event.mode, event.subMode));
+      queueMicrotask(() => editorState.setVimMode(mapVimMode(event.mode, event.subMode)));
     };
 
     cm.on('vim-mode-change', vimModeChangeHandler);
@@ -115,13 +113,13 @@
             content = update.state.doc.toString();
           }
         }),
-        // Focus/blur handlers
+        // Focus/blur handlers - defer state updates to avoid mutation during render
         EditorView.domEventHandlers({
           focus: () => {
-            editorState.setFocused(true);
+            queueMicrotask(() => editorState.setFocused(true));
           },
           blur: () => {
-            editorState.setFocused(false);
+            queueMicrotask(() => editorState.setFocused(false));
           }
         })
       ]
@@ -129,8 +127,10 @@
 
     view = new EditorView({ state, parent: container });
     view.focus();
-    editorState.setFocused(true);
-    editorState.setVimMode('normal');
+    queueMicrotask(() => {
+      editorState.setFocused(true);
+      editorState.setVimMode('normal');
+    });
     setupVimModeListener(view);
 
     return {

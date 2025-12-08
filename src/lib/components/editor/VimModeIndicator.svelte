@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getEditorContext, type VimModeType } from './context.svelte';
+	import { editorState, type VimModeType } from './context.svelte';
 
-	const editor = getEditorContext();
+	const editor = editorState;
 
 	function getModeDisplay(mode: VimModeType): { text: string; class: string } {
 		switch (mode) {

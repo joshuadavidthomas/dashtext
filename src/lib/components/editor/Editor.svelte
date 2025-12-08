@@ -3,11 +3,10 @@
 	import { Annotation, EditorState } from '@codemirror/state';
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
-	import { getEditorContext, type VimModeType } from './context.svelte';
+	import { editorState, type VimModeType } from './context.svelte';
 	import { getDraftsState } from '$lib/stores/drafts.svelte';
 
 	const draftsState = getDraftsState();
-	const editorState = getEditorContext();
 
 	// Store editor view reference for external updates
 	let view: EditorView | null = null;
@@ -51,7 +50,7 @@
 		if (!cm) return;
 
 		vimModeChangeHandler = (event: { mode: string; subMode?: string }) => {
-			editorState.setVimMode(mapVimMode(event.mode, event.subMode));
+			queueMicrotask(() => editorState.setVimMode(mapVimMode(event.mode, event.subMode)));
 		};
 
 		cm.on('vim-mode-change', vimModeChangeHandler);
@@ -73,26 +72,26 @@
 			doc: draftsState.currentDraft?.content ?? '',
 			extensions: [
 				...createExtensions(),
-				// DOM event handlers
-				EditorView.domEventHandlers({
-					keydown: (event, v) => {
-						// Trap Tab in all modes except normal (allow focus navigation in normal)
-						if (event.key === 'Tab' && editorState.vimMode !== 'normal') {
-							event.preventDefault();
-							if (editorState.vimMode === 'insert') {
-								v.dispatch(v.state.replaceSelection('\t'));
-							}
-							return true;
+			// DOM event handlers - defer state updates to avoid mutation during render
+			EditorView.domEventHandlers({
+				keydown: (event, v) => {
+					// Trap Tab in all modes except normal (allow focus navigation in normal)
+					if (event.key === 'Tab' && editorState.vimMode !== 'normal') {
+						event.preventDefault();
+						if (editorState.vimMode === 'insert') {
+							v.dispatch(v.state.replaceSelection('\t'));
 						}
-						return false;
-					},
-					focus: () => {
-						editorState.setFocused(true);
-					},
-					blur: () => {
-						editorState.setFocused(false);
+						return true;
 					}
-				}),
+					return false;
+				},
+				focus: () => {
+					queueMicrotask(() => editorState.setFocused(true));
+				},
+				blur: () => {
+					queueMicrotask(() => editorState.setFocused(false));
+				}
+			}),
 				// Update listener to sync content and cursor to context
 				EditorView.updateListener.of((update) => {
 					const isSyncFromDraft = update.transactions.some((tr) => tr.annotation(syncFromDraft));
@@ -110,10 +109,11 @@
 
 		view = new EditorView({ state, parent: container });
 		view.focus();
-		editorState.setFocused(true);
-
-		// Set initial vim mode state and setup listener
-		editorState.setVimMode('normal');
+		queueMicrotask(() => {
+			editorState.setFocused(true);
+			// Set initial vim mode state
+			editorState.setVimMode('normal');
+		});
 		setupVimModeListener(view);
 
 		return {
