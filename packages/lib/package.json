@@ -27,40 +27,40 @@
     "./styles": "./src/styles/index.css",
     "./styles/*.css": "./src/styles/*.css",
     "./button": {
-      "types": "./src/components/button/index.ts",
-      "svelte": "./src/components/button/index.ts"
+      "types": "./src/components/ui/button/index.ts",
+      "svelte": "./src/components/ui/button/index.ts"
     },
     "./dialog": {
-      "types": "./src/components/dialog/index.ts",
-      "svelte": "./src/components/dialog/index.ts"
+      "types": "./src/components/ui/dialog/index.ts",
+      "svelte": "./src/components/ui/dialog/index.ts"
     },
     "./input": {
-      "types": "./src/components/input/index.ts",
-      "svelte": "./src/components/input/index.ts"
+      "types": "./src/components/ui/input/index.ts",
+      "svelte": "./src/components/ui/input/index.ts"
     },
     "./separator": {
-      "types": "./src/components/separator/index.ts",
-      "svelte": "./src/components/separator/index.ts"
+      "types": "./src/components/ui/separator/index.ts",
+      "svelte": "./src/components/ui/separator/index.ts"
     },
     "./sheet": {
-      "types": "./src/components/sheet/index.ts",
-      "svelte": "./src/components/sheet/index.ts"
+      "types": "./src/components/ui/sheet/index.ts",
+      "svelte": "./src/components/ui/sheet/index.ts"
     },
     "./sidebar": {
-      "types": "./src/components/sidebar/index.ts",
-      "svelte": "./src/components/sidebar/index.ts"
+      "types": "./src/components/ui/sidebar/index.ts",
+      "svelte": "./src/components/ui/sidebar/index.ts"
     },
     "./skeleton": {
-      "types": "./src/components/skeleton/index.ts",
-      "svelte": "./src/components/skeleton/index.ts"
+      "types": "./src/components/ui/skeleton/index.ts",
+      "svelte": "./src/components/ui/skeleton/index.ts"
     },
     "./toggle": {
-      "types": "./src/components/toggle/index.ts",
-      "svelte": "./src/components/toggle/index.ts"
+      "types": "./src/components/ui/toggle/index.ts",
+      "svelte": "./src/components/ui/toggle/index.ts"
     },
     "./tooltip": {
-      "types": "./src/components/tooltip/index.ts",
-      "svelte": "./src/components/tooltip/index.ts"
+      "types": "./src/components/ui/tooltip/index.ts",
+      "svelte": "./src/components/ui/tooltip/index.ts"
     },
     "./appbar": {
       "types": "./src/components/appbar/index.ts",
@@ -87,11 +87,11 @@
     "@replit/codemirror-vim": "catalog:",
     "@tailwindcss/forms": "catalog:",
     "@tailwindcss/typography": "catalog:",
-    "bits-ui": "catalog:",
+    "bits-ui": "^2.11.0",
     "clsx": "catalog:",
     "runed": "catalog:",
     "tailwind-merge": "catalog:",
-    "tailwind-variants": "catalog:",
+    "tailwind-variants": "^3.1.1",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:"
   },
@@ -99,7 +99,8 @@
     "svelte": "^5.0.0"
   },
   "devDependencies": {
-    "@lucide/svelte": "catalog:",
+    "@internationalized/date": "^3.8.1",
+    "@lucide/svelte": "^0.544.0",
     "svelte": "catalog:",
     "svelte-check": "catalog:",
     "typescript": "catalog:"
