@@ -1,5 +1,7 @@
 {
   "name": "dashtext",
+  "description": "A text editor for quick capture",
+  "license": "Apache-2.0",
   "private": true,
   "workspaces": {
     "packages": ["packages/*"],

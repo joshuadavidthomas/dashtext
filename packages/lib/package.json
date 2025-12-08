@@ -1,6 +1,8 @@
 {
   "name": "@dashtext/lib",
   "version": "0.0.1",
+  "description": "Shared components and utilities for Dashtext",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "check": "svelte-check --tsconfig ./tsconfig.json"
