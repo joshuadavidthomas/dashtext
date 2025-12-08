@@ -1,12 +1,12 @@
 import { eq, desc } from 'drizzle-orm';
 import { getDb, drafts } from '$lib/db';
 import type { DraftAPI, DraftData } from '@dashtext/lib';
-import type { Draft as DrizzleDraft } from '$lib/db/schema';
+import type { Draft } from '$lib/db/schema';
 
 /**
  * Convert Drizzle row (camelCase) to DraftData (snake_case)
  */
-function toApiFormat(row: DrizzleDraft): DraftData {
+function toApiFormat(row: Draft): DraftData {
   return {
     id: row.id,
     content: row.content,
