@@ -1,0 +1,110 @@
+{
+  "name": "@dashtext/lib",
+  "version": "0.0.1",
+  "description": "Shared components and utilities for Dashtext",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./api": {
+      "types": "./src/api/index.ts",
+      "default": "./src/api/index.ts"
+    },
+    "./stores": {
+      "types": "./src/stores/index.ts",
+      "svelte": "./src/stores/index.ts"
+    },
+    "./editor": {
+      "types": "./src/components/editor/index.ts",
+      "svelte": "./src/components/editor/index.ts"
+    },
+    "./styles": "./src/styles/index.css",
+    "./styles/*.css": "./src/styles/*.css",
+    "./button": {
+      "types": "./src/components/ui/button/index.ts",
+      "svelte": "./src/components/ui/button/index.ts"
+    },
+    "./dialog": {
+      "types": "./src/components/ui/dialog/index.ts",
+      "svelte": "./src/components/ui/dialog/index.ts"
+    },
+    "./input": {
+      "types": "./src/components/ui/input/index.ts",
+      "svelte": "./src/components/ui/input/index.ts"
+    },
+    "./separator": {
+      "types": "./src/components/ui/separator/index.ts",
+      "svelte": "./src/components/ui/separator/index.ts"
+    },
+    "./sheet": {
+      "types": "./src/components/ui/sheet/index.ts",
+      "svelte": "./src/components/ui/sheet/index.ts"
+    },
+    "./sidebar": {
+      "types": "./src/components/ui/sidebar/index.ts",
+      "svelte": "./src/components/ui/sidebar/index.ts"
+    },
+    "./skeleton": {
+      "types": "./src/components/ui/skeleton/index.ts",
+      "svelte": "./src/components/ui/skeleton/index.ts"
+    },
+    "./toggle": {
+      "types": "./src/components/ui/toggle/index.ts",
+      "svelte": "./src/components/ui/toggle/index.ts"
+    },
+    "./tooltip": {
+      "types": "./src/components/ui/tooltip/index.ts",
+      "svelte": "./src/components/ui/tooltip/index.ts"
+    },
+    "./appbar": {
+      "types": "./src/components/appbar/index.ts",
+      "svelte": "./src/components/appbar/index.ts"
+    },
+    "./hooks": {
+      "types": "./src/hooks/is-mobile.svelte.ts",
+      "svelte": "./src/hooks/is-mobile.svelte.ts"
+    },
+    "./utils": {
+      "types": "./src/utils.ts",
+      "default": "./src/utils.ts"
+    }
+  },
+  "files": ["src"],
+  "dependencies": {
+    "@codemirror/commands": "catalog:",
+    "@codemirror/lang-markdown": "catalog:",
+    "@codemirror/language": "catalog:",
+    "@codemirror/language-data": "catalog:",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
+    "@lezer/highlight": "catalog:",
+    "@replit/codemirror-vim": "catalog:",
+    "@tailwindcss/forms": "catalog:",
+    "@tailwindcss/typography": "catalog:",
+    "bits-ui": "catalog:",
+    "clsx": "catalog:",
+    "runed": "catalog:",
+    "tailwind-merge": "catalog:",
+    "tailwind-variants": "catalog:",
+    "tailwindcss": "catalog:",
+    "tw-animate-css": "catalog:"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@internationalized/date": "catalog:",
+    "@lucide/svelte": "catalog:",
+    "svelte": "catalog:",
+    "svelte-check": "catalog:",
+    "typescript": "catalog:"
+  }
+}

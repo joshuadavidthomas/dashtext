@@ -1,0 +1,32 @@
+{
+  "name": "@dashtext/web",
+  "version": "0.3.0",
+  "description": "A text editor for quick capture",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "dependencies": {
+    "@dashtext/lib": "workspace:*",
+    "idb": "catalog:"
+  },
+  "devDependencies": {
+    "@lucide/svelte": "catalog:",
+    "@types/node": "catalog:",
+    "@sveltejs/adapter-cloudflare": "catalog:",
+    "@sveltejs/kit": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "svelte": "catalog:",
+    "svelte-check": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

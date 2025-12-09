@@ -5,9 +5,11 @@ on:
     branches: [main]
     paths:
       - .github/**
+      - packages/**
   pull_request:
     paths:
       - .github/**
+      - packages/**
 
 jobs:
   zizmor:

@@ -1,0 +1,43 @@
+{
+  "name": "@dashtext/desktop",
+  "version": "0.3.0",
+  "description": "A text editor for quick capture",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri",
+    "screenshots": "playwright test --project=screenshots"
+  },
+  "dependencies": {
+    "@dashtext/lib": "workspace:*",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
+    "@replit/codemirror-vim": "catalog:",
+    "@tauri-apps/api": "catalog:",
+    "@tauri-apps/plugin-opener": "catalog:",
+    "@tauri-apps/plugin-sql": "catalog:",
+    "drizzle-orm": "catalog:"
+  },
+  "devDependencies": {
+    "@lucide/svelte": "catalog:",
+    "@types/node": "catalog:",
+    "@playwright/test": "catalog:",
+    "@sveltejs/adapter-static": "catalog:",
+    "@sveltejs/kit": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@tauri-apps/cli": "catalog:",
+    "drizzle-kit": "catalog:",
+    "svelte": "catalog:",
+    "svelte-check": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
