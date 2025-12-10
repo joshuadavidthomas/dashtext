@@ -1,6 +1,6 @@
-import { listDrafts } from '$lib/api';
+import { drafts } from '$lib/api';
 
 export async function load() {
-  const drafts = await listDrafts();
-  return { drafts };
+  const list = await drafts.list();
+  return { drafts: list };
 }

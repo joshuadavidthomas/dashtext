@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createDraft, saveDraft } from '$lib/api';
+  import { drafts } from '$lib/api';
   import { CaptureEditor } from '$lib/components/capture';
   import { VimModeIndicator } from '@dashtext/lib/editor';
   import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -26,8 +26,8 @@
 
     saving = true;
     try {
-      const draft = await createDraft();
-      await saveDraft(draft.id, content.trim());
+      const draft = await drafts.create();
+      await drafts.save(draft.id, content.trim());
       await closeCapture();
     } finally {
       saving = false;
@@ -40,8 +40,8 @@
 
     saving = true;
     try {
-      const draft = await createDraft();
-      await saveDraft(draft.id, content.trim());
+      const draft = await drafts.create();
+      await drafts.save(draft.id, content.trim());
       clearEditor();
     } finally {
       saving = false;
