@@ -15,6 +15,9 @@ This document reviews the current workspace architecture for the Dashtext applic
 - [Migration Path](#migration-path)
 - [Proposed Architecture Diagram](#proposed-architecture-diagram)
 - [Summary](#summary)
+- [Svelte 5 Compliance Review](#svelte-5-compliance-review)
+- [Implementation Checklist](#implementation-checklist)
+- [Additional Patterns to Review](#additional-patterns-to-review)
 
 ---
 
@@ -301,6 +304,7 @@ packages/lib/src/components/editor-layout/
 <script lang="ts">
   import { EditorLayout } from '@dashtext/lib/editor-layout';
   import { listDrafts, createDraft, saveDraft } from '$lib/api';
+  import { type DraftsAPI } from '@dashtext/lib/stores';
   import { replaceState } from '$app/navigation';
   import { createUpdaterState } from '$lib/stores/updater.svelte';
   import { UpdateDialog, VersionIndicator } from '$lib/components/updater';
@@ -311,9 +315,9 @@ packages/lib/src/components/editor-layout/
 
   let { data, children } = $props();
 
-  const draftsAPI = {
-    createDraft,
-    saveDraft: (id, content) => saveDraft(id, content),
+  const draftsAPI: DraftsAPI = {
+    createDraft: async () => createDraft(),
+    saveDraft: async (id, content) => saveDraft(id, content),
     replaceUrl: (url) => replaceState(url, {})
   };
 
@@ -351,13 +355,14 @@ packages/lib/src/components/editor-layout/
 <script lang="ts">
   import { EditorLayout } from '@dashtext/lib/editor-layout';
   import { listDrafts, createDraft, saveDraft } from '$lib/api';
+  import { type DraftsAPI } from '@dashtext/lib/stores';
   import { replaceState } from '$app/navigation';
 
   let { data, children } = $props();
 
-  const draftsAPI = {
-    createDraft,
-    saveDraft: (id, content) => saveDraft(id, content),
+  const draftsAPI: DraftsAPI = {
+    createDraft: async () => createDraft(),
+    saveDraft: async (id, content) => saveDraft(id, content),
     replaceUrl: (url) => replaceState(url, {})
   };
 </script>
@@ -417,33 +422,22 @@ export interface UpdateInfo {
 
 #### Create Context Helpers
 
+> **Note**: This uses Svelte 5.40.0+'s `createContext()` for type-safe, key-free context management, consistent with the existing `getDraftsState`/`setDraftsState` and `getEditorContext`/`setEditorContext` patterns in the codebase.
+
 ```typescript
 // packages/lib/src/platform/context.ts
-import { getContext, setContext } from 'svelte';
+import { createContext } from 'svelte';
 import type { PlatformCapabilities } from './types';
 
-const PLATFORM_KEY = Symbol('platform');
+// Type-safe context using Svelte 5.40.0+ createContext()
+// Returns [getter, setter] tuple - no key needed
+export const [getPlatform, setPlatformContext] = createContext<PlatformCapabilities>();
+```
 
-export function setPlatformContext(capabilities: PlatformCapabilities) {
-  setContext(PLATFORM_KEY, capabilities);
-}
-
-export function getPlatform(): PlatformCapabilities {
-  return getContext<PlatformCapabilities>(PLATFORM_KEY);
-}
-
-// Convenience hooks for specific capabilities
-export function useWindow() {
-  return getPlatform().window;
-}
-
-export function useUpdater() {
-  return getPlatform().updater;
-}
-
-export function useQuickCapture() {
-  return getPlatform().quickCapture;
-}
+```typescript
+// packages/lib/src/platform/index.ts
+export { getPlatform, setPlatformContext } from './context';
+export type { PlatformCapabilities, UpdateInfo } from './types';
 ```
 
 #### Implement for Desktop (Tauri)
@@ -547,7 +541,7 @@ export const webPlatform: PlatformCapabilities = {
 <!-- packages/lib/src/components/editor-layout/BaseWinBar.svelte -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { getPlatform, useWindow, useQuickCapture } from '$lib/platform';
+  import { getPlatform } from '$lib/platform';
   import * as AppBar from '$lib/appbar';
   import { Button } from '$lib/button';
   import * as Tooltip from '$lib/tooltip';
@@ -563,8 +557,8 @@ export const webPlatform: PlatformCapabilities = {
   let { children }: Props = $props();
 
   const platform = getPlatform();
-  const windowControls = useWindow();
-  const quickCapture = useQuickCapture();
+  const windowControls = platform.window;
+  const quickCapture = platform.quickCapture;
   const sidebar = useSidebar();
   const draftsState = getDraftsState();
 
@@ -583,7 +577,7 @@ export const webPlatform: PlatformCapabilities = {
 <AppBar.Root
   as="header"
   data-layout="menu-bar"
-  data-tauri-drag-region={platform.platform === 'desktop'}
+  data-tauri-drag-region={platform.platform === 'desktop' ? true : undefined}
   class="gap-1 bg-[var(--cm-background-dark)] p-1"
 >
   <AppBar.Section style={platform.platform === 'desktop' ? '-webkit-app-region: no-drag;' : ''}>
@@ -956,3 +950,149 @@ The sidebar rendering is 100% duplicated. Extract to lib immediately.
 5. **Add drift detection** - automated CI checks prevent silent divergence
 
 The goal is to make platform packages as thin as possible: they provide platform-specific implementations and inject them into shared components, rather than duplicating shared logic.
+
+---
+
+## Svelte 5 Compliance Review
+
+This document was reviewed against Svelte 5 documentation on 2024-12-09. All proposed code samples have been validated with `svelte-autofixer`.
+
+### Validated Patterns
+
+| Pattern | Status | Notes |
+|---------|--------|-------|
+| `$props()` with destructuring | ✅ | Matches codebase pattern |
+| `$derived()` / `$derived.by()` | ✅ | Used correctly for computed values |
+| `$effect()` with cleanup | ✅ | Returns unsubscribe functions correctly |
+| `Snippet` type from `'svelte'` | ✅ | Correct typing for optional/required snippets |
+| `{#snippet}` / `{@render}` | ✅ | Correct Svelte 5 syntax |
+| `createContext()` tuple pattern | ✅ | Updated to match codebase (Svelte 5.40.0+) |
+| Event handlers (`onclick`) | ✅ | Uses Svelte 5 syntax, not legacy `on:click` |
+
+### Codebase Consistency Notes
+
+1. **Context Pattern**: The codebase uses `createContext()` from Svelte 5.40.0+ for drafts and editor contexts. The sidebar uses the older `setContext`/`getContext` with `Symbol.for()` pattern (from shadcn-svelte). The Platform Capability Injection section has been updated to use `createContext()` for consistency.
+
+2. **Naming Conventions**: The codebase mixes `get*` (drafts, editor) and `use*` (sidebar) naming. This document uses `getPlatform()` for the main context accessor to match the existing pattern.
+
+3. **API Index Duplication**: `packages/{desktop,web}/src/lib/api/index.ts` files are nearly identical and could be extracted to the shared lib as a future improvement.
+
+---
+
+## Implementation Checklist
+
+### Phase 1: Extract DraftsSidebar (Low Risk)
+
+- [ ] Create `packages/lib/src/components/editor-layout/` directory
+- [ ] Create `DraftsSidebar.svelte` extracting sidebar content from both layouts
+- [ ] Export from `packages/lib/src/components/editor-layout/index.ts`
+- [ ] Update desktop `(editor)/+layout.svelte` to use `DraftsSidebar`
+- [ ] Update web `(editor)/+layout.svelte` to use `DraftsSidebar`
+- [ ] Verify both platforms render correctly
+- [ ] Run `bun run check` to verify types
+
+### Phase 2: Platform Abstraction
+
+- [ ] Create `packages/lib/src/platform/types.ts` with `PlatformCapabilities` interface
+- [ ] Create `packages/lib/src/platform/context.ts` with `createContext()` pattern
+- [ ] Create `packages/lib/src/platform/index.ts` barrel export
+- [ ] Create `packages/desktop/src/lib/platform.ts` with `desktopPlatform` implementation
+- [ ] Create `packages/web/src/lib/platform.ts` with `webPlatform` implementation
+- [ ] Update `packages/desktop/src/routes/+layout.svelte` to call `setPlatformContext()`
+- [ ] Update `packages/web/src/routes/+layout.svelte` to call `setPlatformContext()`
+- [ ] Run `bun run check` and `bun run tauri dev` to verify
+
+### Phase 3: Composable StatusLine and WinBar
+
+- [ ] Create `packages/lib/src/components/editor-layout/BaseStatusLine.svelte`
+- [ ] Create `packages/lib/src/components/editor-layout/BaseWinBar.svelte`
+- [ ] Update desktop `StatusLine.svelte` to use `BaseStatusLine` with `VersionIndicator` slot
+- [ ] Update web `StatusLine.svelte` to use `BaseStatusLine` (no extras)
+- [ ] Update desktop `WinBar.svelte` to use `BaseWinBar` with extras slot
+- [ ] Update web `WinBar.svelte` to use `BaseWinBar` (no extras)
+- [ ] Run `bun run check` on all packages
+
+### Phase 4: Full EditorLayout Extraction
+
+- [ ] Create `packages/lib/src/components/editor-layout/EditorLayout.svelte`
+- [ ] Migrate desktop `(editor)/+layout.svelte` to thin wrapper using `EditorLayout`
+- [ ] Migrate web `(editor)/+layout.svelte` to thin wrapper using `EditorLayout`
+- [ ] Verify snippets (`headerExtra`, `statusExtra`, `afterLayout`) work correctly
+- [ ] Test focus/visibility refresh on both platforms
+- [ ] Run full test suite: `bun run check && bun run tauri dev`
+
+### Phase 5: Drift Prevention (Optional)
+
+- [ ] Create `.github/workflows/check-drift.yml` for CI drift detection
+- [ ] Or create `scripts/check-drift.ts` for local drift checking
+- [ ] Add to CI pipeline
+- [ ] Document expected differences in `ALLOWED_DIFFERENT` list
+
+### Post-Implementation Verification
+
+- [ ] Desktop: Window controls work (minimize, maximize, close)
+- [ ] Desktop: Quick capture opens correctly
+- [ ] Desktop: Updater dialog shows when update available
+- [ ] Desktop: Drag region works for window movement
+- [ ] Desktop: Focus refresh works after quick capture
+- [ ] Web: Visibility refresh works on tab switch
+- [ ] Web: No desktop-specific UI elements appear
+- [ ] Both: Sidebar toggle works
+- [ ] Both: Draft creation/editing/deletion works
+- [ ] Both: Vim mode indicator shows correct mode
+
+---
+
+## Additional Patterns to Review
+
+The following patterns in the codebase should be reviewed for potential extraction or improvement:
+
+### 1. API Index Files (High Value)
+
+`packages/{desktop,web}/src/lib/api/index.ts` contain nearly identical wrapper functions:
+
+```typescript
+// Both files have this same pattern
+export async function listDrafts(): Promise<Draft[]> {
+  const data = await backend.list();
+  return data.map((d) => new Draft(d));
+}
+```
+
+**Recommendation**: Extract to shared lib with platform backend injection.
+
+### 2. Draft Page Routes
+
+`packages/{desktop,web}/src/routes/(editor)/drafts/[[id]]/+page.svelte` should be compared for drift.
+
+### 3. Load Functions
+
+`packages/{desktop,web}/src/routes/(editor)/drafts/[[id]]/+page.ts` load functions should be compared.
+
+### 4. Sidebar Context Pattern
+
+The sidebar uses `Symbol.for()` pattern from shadcn-svelte:
+
+```typescript
+const SYMBOL_KEY = "scn-sidebar";
+export function setSidebar(props: SidebarStateProps): SidebarState {
+  return setContext(Symbol.for(SYMBOL_KEY), new SidebarState(props));
+}
+```
+
+**Recommendation**: This is a third-party pattern (shadcn-svelte) and should remain as-is unless the upstream library changes. Document this exception.
+
+### 5. Capture Component Vim Integration
+
+The capture component uses global vim command registration with a module-level flag:
+
+```typescript
+let vimCommandsRegistered = false;
+// ...
+if (!vimCommandsRegistered) {
+  Vim.defineEx('captureclose', ...);
+  vimCommandsRegistered = true;
+}
+```
+
+**Recommendation**: This pattern works but could be reviewed for potential improvements using Svelte's lifecycle or context patterns.

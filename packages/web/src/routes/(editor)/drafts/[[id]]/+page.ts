@@ -1,11 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
-import { getDraft } from '$lib/api';
+import { drafts } from '$lib/api';
 
 export async function load({ params, parent }) {
   if (!params.id) {
-    const { drafts } = await parent();
-    if (drafts.length > 0) {
-      redirect(307, `/drafts/${drafts[0].id}`);
+    const { drafts: list } = await parent();
+    if (list.length > 0) {
+      redirect(307, `/drafts/${list[0].id}`);
     }
     return { draft: null };
   }
@@ -20,7 +20,7 @@ export async function load({ params, parent }) {
     error(400, 'Invalid draft ID');
   }
 
-  const draft = await getDraft(id);
+  const draft = await drafts.get(id);
 
   if (!draft) {
     error(404, 'Draft not found');

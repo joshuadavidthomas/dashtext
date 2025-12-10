@@ -51,7 +51,9 @@ export class Draft {
 export interface DraftsAPI {
   createDraft(): Promise<Draft>;
   saveDraft(id: number, content: string): Promise<DraftData>;
+  deleteDraft(id: number): Promise<void>;
   replaceUrl(url: string): void;
+  navigateTo(url: string): void;
 }
 
 /**
@@ -115,6 +117,23 @@ export class DraftsState {
     }
 
     this.pendingContent = null;
+  }
+
+  async deleteCurrentDraft() {
+    if (!this.currentDraft) return;
+
+    const id = this.currentDraft.id;
+    await this.api.deleteDraft(id);
+
+    // Update local state
+    this.drafts = this.drafts.filter((d) => d.id !== id);
+
+    // Navigate to next draft or new
+    if (this.drafts.length > 0) {
+      this.api.navigateTo(`/drafts/${this.drafts[0].id}`);
+    } else {
+      this.api.navigateTo('/drafts/new');
+    }
   }
 }
 

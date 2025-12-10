@@ -68,6 +68,15 @@
       "types": "./src/components/appbar/index.ts",
       "svelte": "./src/components/appbar/index.ts"
     },
+    "./editor-layout": {
+      "types": "./src/components/editor-layout/index.ts",
+      "svelte": "./src/components/editor-layout/index.ts"
+    },
+    "./platform": {
+      "types": "./src/platform/index.ts",
+      "svelte": "./src/platform/index.ts",
+      "default": "./src/platform/index.ts"
+    },
     "./hooks": {
       "types": "./src/hooks/is-mobile.svelte.ts",
       "svelte": "./src/hooks/is-mobile.svelte.ts"

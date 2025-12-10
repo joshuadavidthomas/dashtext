@@ -1,6 +1,14 @@
 <script lang="ts">
-  import * as AppBar from '@dashtext/lib/appbar';
-  import { getEditorContext, VimModeIndicator } from '@dashtext/lib/editor';
+  import type { Snippet } from 'svelte';
+  import * as AppBar from '../appbar';
+  import { getEditorContext, VimModeIndicator } from '../editor';
+
+  type Props = {
+    /** Platform-specific status items (e.g., VersionIndicator on desktop) */
+    statusExtra?: Snippet;
+  };
+
+  let { statusExtra }: Props = $props();
 
   const editor = getEditorContext();
 
@@ -14,6 +22,7 @@
 <AppBar.Root as="footer" data-layout="footer-bar" class="bg-[var(--cm-statusline-bg)] font-mono text-xs">
   <AppBar.Section>
     <VimModeIndicator />
+    {#if statusExtra}{@render statusExtra()}{/if}
   </AppBar.Section>
 
   <AppBar.Section class="text-[var(--cm-statusline-fg)]">
