@@ -36,13 +36,18 @@ export function createBaseExtensions(): Extension[] {
 	];
 }
 
+export interface ExtensionOptions {
+	enableVim?: boolean;
+}
+
 /**
- * Create the full extension set (always includes vim mode)
+ * Create the full extension set with optional vim mode
  */
-export function createExtensions(): Extension[] {
+export function createExtensions(options: ExtensionOptions = {}): Extension[] {
+	const { enableVim = true } = options;
 	return [
-		// Vim mode (always enabled)
-		vim(),
+		// Vim mode (conditional)
+		...(enableVim ? [vim()] : []),
 
 		// Base extensions (includes theme)
 		...createBaseExtensions()

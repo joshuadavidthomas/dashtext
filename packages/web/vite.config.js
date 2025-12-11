@@ -7,5 +7,10 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 export default defineConfig(async () => ({
   plugins: [tailwindcss(), sveltekit()],
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) }
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  server: {
+    fs: {
+      allow: ["../.."]
+    }
+  }
 }));

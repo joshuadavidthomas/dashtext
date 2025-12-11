@@ -27,6 +27,8 @@
 	const modeDisplay = $derived(getModeDisplay(editor.vimMode));
 </script>
 
-<div class="w-fit px-2 py-0.5 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
-	{modeDisplay.text}
-</div>
+{#if editor.vimMode}
+	<div class="w-fit px-2 py-0.5 font-semibold text-[var(--cm-mode-fg)] {modeDisplay.class}">
+		{modeDisplay.text}
+	</div>
+{/if}
