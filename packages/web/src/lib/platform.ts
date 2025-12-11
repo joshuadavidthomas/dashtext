@@ -16,6 +16,7 @@ export const webPlatform: PlatformCapabilities = {
   // Not available on web
   window: null,
   quickCapture: null,
+  settings: null, // Web uses dialog instead
 
   draftsAPI: {
     createDraft: async () => drafts.create(),

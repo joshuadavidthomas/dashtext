@@ -4,10 +4,21 @@
 	import { getCM } from '@replit/codemirror-vim';
 	import { createExtensions } from './extensions';
 	import { getEditorContext, type VimModeType } from './context.svelte';
-	import { getDraftsState } from '../../stores/drafts.svelte';
+	import { getDraftsState, getSettingsState } from '../../stores';
 
 	const draftsState = getDraftsState();
 	const editorState = getEditorContext();
+	const settings = getSettingsState();
+
+	// Track vim state - editor recreates when this changes
+	let vimKey = $state(settings.vimEnabled);
+
+	// Watch for changes and update key to force recreation
+	$effect(() => {
+		if (settings.vimEnabled !== vimKey) {
+			vimKey = settings.vimEnabled;
+		}
+	});
 
 	// Store editor view reference for external updates
 	let view: EditorView | null = null;
@@ -69,10 +80,12 @@
 
 	// Action for editor initialization - runs once on mount
 	function initEditor(container: HTMLDivElement) {
+		const enableVim = settings.vimEnabled;
+
 		const state = EditorState.create({
 			doc: draftsState.currentDraft?.content ?? '',
 			extensions: [
-				...createExtensions(),
+				...createExtensions({ enableVim }),
 				// DOM event handlers
 				EditorView.domEventHandlers({
 					keydown: (event, v) => {
@@ -112,9 +125,11 @@
 		view.focus();
 		editorState.setFocused(true);
 
-		// Set initial vim mode state and setup listener
-		editorState.setVimMode('normal');
-		setupVimModeListener(view);
+		// Set initial vim mode state and setup listener (only if vim is enabled)
+		if (enableVim) {
+			editorState.setVimMode('normal');
+			setupVimModeListener(view);
+		}
 
 		return {
 			destroy() {
@@ -156,7 +171,9 @@
 	});
 </script>
 
-<div use:initEditor class="editor-container" role="textbox" aria-label="Text editor"></div>
+{#key vimKey}
+	<div use:initEditor class="editor-container" role="textbox" aria-label="Text editor"></div>
+{/key}
 
 <style>
 	.editor-container {

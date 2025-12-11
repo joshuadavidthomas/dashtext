@@ -7,7 +7,8 @@
   import { getDraftsState } from '../../stores';
   import { getPlatform } from '../../platform';
   import { goto } from '$app/navigation';
-  import { PanelLeft, Plus, Trash2, Zap, Minus, Square, X } from '@lucide/svelte';
+  import { getContext } from 'svelte';
+  import { PanelLeft, Plus, Trash2, Zap, Settings, Minus, Square, X } from '@lucide/svelte';
 
   type Props = {
     /** Additional toolbar content */
@@ -19,6 +20,7 @@
   const platform = getPlatform();
   const sidebar = useSidebar();
   const draftsState = getDraftsState();
+  const openSettingsWeb = getContext<(() => void) | undefined>('openSettings');
 
   const currentDraftId = $derived(draftsState.currentDraft?.id ?? null);
 
@@ -33,7 +35,27 @@
   async function handleQuickCapture() {
     await platform.quickCapture?.open();
   }
+
+  async function handleSettings() {
+    // Desktop: open window via platform API
+    if (platform.settings) {
+      await platform.settings.open();
+    } else {
+      // Web: trigger via context
+      openSettingsWeb?.();
+    }
+  }
+
+  // Keyboard shortcut for settings (Ctrl+, or Cmd+,)
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === ',' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSettings();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <AppBar.Root
   as="header"
@@ -114,6 +136,23 @@
         <Tooltip.Content side="bottom">Quick capture</Tooltip.Content>
       </Tooltip.Root>
     {/if}
+
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        {#snippet child({ props })}
+          <Button
+            {...props}
+            variant="toolbar"
+            size="icon-sm"
+            onclick={handleSettings}
+            aria-label="Settings"
+          >
+            <Settings class="size-3.5" />
+          </Button>
+        {/snippet}
+      </Tooltip.Trigger>
+      <Tooltip.Content side="bottom">Settings (Ctrl+,)</Tooltip.Content>
+    </Tooltip.Root>
 
     {#if children}{@render children()}{/if}
   </AppBar.Section>

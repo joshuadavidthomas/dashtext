@@ -33,6 +33,13 @@ export const desktopPlatform: PlatformCapabilities = {
     },
   },
 
+  settings: {
+    open: async () => {
+      const m = await import('$lib/components/settings');
+      await m.openSettings();
+    },
+  },
+
   draftsAPI: {
     createDraft: async () => drafts.create(),
     saveDraft: async (id, content) => drafts.save(id, content),

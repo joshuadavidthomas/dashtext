@@ -23,6 +23,11 @@ export interface PlatformCapabilities {
     open(): Promise<void>;
   } | null;
 
+  /** Settings window capability (null if not supported, e.g. web uses dialog instead) */
+  settings: {
+    open(): Promise<void>;
+  } | null;
+
   /** Drafts API adapter - platform-specific storage implementation */
   draftsAPI: DraftsAPI;
 
