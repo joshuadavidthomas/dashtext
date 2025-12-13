@@ -3,10 +3,12 @@
   "app": {
     "windows": [
       {
-        "title": "Dashtext",
-        "width": 800,
-        "height": 600,
-        "decorations": false
+      "title": "Dashtext",
+      "width": 800,
+      "height": 600,
+      "decorations": false,
+      "visible": false,
+      "backgroundColor": "#222436"
       }
     ],
     "security": {

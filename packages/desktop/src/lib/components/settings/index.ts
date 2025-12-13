@@ -7,14 +7,16 @@ export async function openSettings() {
 		return existing;
 	}
 
-	return new WebviewWindow('settings', {
-		url: '/settings',
-		title: 'Settings',
-		width: 500,
-		height: 400,
-		decorations: false, // Custom titlebar
-		center: true,
-		focus: true,
-		resizable: false
-	});
+  return new WebviewWindow('settings', {
+    url: '/settings',
+    title: 'Settings',
+    width: 500,
+    height: 400,
+    decorations: false, // Custom titlebar
+    center: true,
+    focus: false,
+    visible: false,
+    backgroundColor: '#222436',
+    resizable: false
+  });
 }
