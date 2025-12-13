@@ -1,16 +1,10 @@
 /**
- * Theme Bootstrap Script
- * 
- * This script MUST be inlined in <head> BEFORE %sveltekit.head% to prevent
- * flash of wrong theme on page load.
- * 
- * IMPORTANT: This is the canonical source. When updating, also update:
+ * Canonical source. Update these files when changing:
  *   - packages/desktop/src/app.html
  *   - packages/web/src/app.html
- * 
- * Three-state theme cycle: light → dark → auto (system preference)
- * Storage key: 'theme'
- * Values: 'light' | 'dark' | null (auto)
+ *
+ * Must be inlined in <head> BEFORE %sveltekit.head%
+ * Storage key: 'theme' ('light' | 'dark' | null for auto)
  */
 (function () {
   var THEME_KEY = 'theme';
