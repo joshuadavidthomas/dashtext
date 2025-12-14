@@ -13,17 +13,18 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap"
       rel="stylesheet"
     />
-    <!-- Critical CSS: prevents flash before stylesheets load -->
+    <!-- Critical CSS: system-aware fallback before JS runs -->
     <style>
-      html { background: #222436; }
-      html:not(.dark) { background: #e1e2e7; }
+      html, body { background: #e1e2e7; color-scheme: light; }
+      @media (prefers-color-scheme: dark) {
+        html, body { background: #222436; color-scheme: dark; }
+      }
+      html.dark, html.dark body { background: #222436; color-scheme: dark; }
     </style>
     <!-- Theme bootstrap: see packages/lib/src/scripts/theme-bootstrap.js -->
     <script>
       (function () {
         var THEME_KEY = 'theme';
-        var DARK_BG = '#222436';
-        var LIGHT_BG = '#e1e2e7';
         function getSystemTheme() {
           return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
@@ -39,7 +40,6 @@
         var root = document.documentElement;
         root.classList.toggle('dark', isDark);
         root.style.colorScheme = isDark ? 'dark' : 'light';
-        root.style.backgroundColor = isDark ? DARK_BG : LIGHT_BG;
       })();
     </script>
     %sveltekit.head%

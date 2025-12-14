@@ -8,8 +8,6 @@
  */
 (function () {
   var THEME_KEY = 'theme';
-  var DARK_BG = '#222436';
-  var LIGHT_BG = '#e1e2e7';
 
   function getSystemTheme() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -29,5 +27,4 @@
 
   root.classList.toggle('dark', isDark);
   root.style.colorScheme = isDark ? 'dark' : 'light';
-  root.style.backgroundColor = isDark ? DARK_BG : LIGHT_BG;
 })();
