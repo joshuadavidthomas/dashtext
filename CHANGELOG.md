@@ -18,6 +18,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed flash of unstyled content (FOUC) on app startup
+
 ## [0.3.0]
 
 ### Added
