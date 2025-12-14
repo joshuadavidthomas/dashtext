@@ -1,6 +1,6 @@
 import { createContext } from 'svelte';
 
-const STORAGE_KEY = 'dashtext-settings';
+const STORAGE_KEY = 'settings';
 
 interface SettingsData {
 	vimEnabled: boolean;

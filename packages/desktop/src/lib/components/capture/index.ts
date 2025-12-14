@@ -17,7 +17,9 @@ export async function openQuickCapture() {
     decorations: false,
     alwaysOnTop: true,
     center: true,
-    focus: true,
+    focus: false,
+    visible: false,
+    backgroundColor: '#222436',
     resizable: true,
     skipTaskbar: true,
   });
