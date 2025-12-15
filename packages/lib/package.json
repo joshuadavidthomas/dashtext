@@ -84,6 +84,14 @@
     "./utils": {
       "types": "./src/utils.ts",
       "default": "./src/utils.ts"
+    },
+    "./db": {
+      "types": "./src/db/schema.ts",
+      "default": "./src/db/schema.ts"
+    },
+    "./db/migrations": {
+      "types": "./src/db/migrations/index.ts",
+      "default": "./src/db/migrations/index.ts"
     }
   },
   "files": ["src"],
@@ -104,7 +112,8 @@
     "tailwind-merge": "catalog:",
     "tailwind-variants": "catalog:",
     "tailwindcss": "catalog:",
-    "tw-animate-css": "catalog:"
+    "tw-animate-css": "catalog:",
+    "drizzle-orm": "catalog:"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
@@ -112,6 +121,7 @@
   "devDependencies": {
     "@internationalized/date": "catalog:",
     "@lucide/svelte": "catalog:",
+    "drizzle-kit": "catalog:",
     "svelte": "catalog:",
     "svelte-check": "catalog:",
     "typescript": "catalog:"

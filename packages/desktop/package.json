@@ -15,14 +15,14 @@
     "screenshots": "playwright test --project=screenshots"
   },
   "dependencies": {
-    "@dashtext/lib": "workspace:*",
     "@codemirror/state": "catalog:",
     "@codemirror/view": "catalog:",
+    "@dashtext/lib": "workspace:*",
     "@replit/codemirror-vim": "catalog:",
     "@tauri-apps/api": "catalog:",
     "@tauri-apps/plugin-opener": "catalog:",
     "@tauri-apps/plugin-sql": "catalog:",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
     "@lucide/svelte": "catalog:",

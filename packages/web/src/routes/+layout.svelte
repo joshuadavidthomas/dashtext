@@ -3,6 +3,8 @@
   import { setPlatformContext } from '@dashtext/lib/platform';
   import { createSettingsContext, OnboardingDialog } from '@dashtext/lib';
   import { webPlatform } from '$lib/platform';
+  // Import diagnostics to make them available in console
+  import '$lib/api/db-diagnostics';
 
   let { children } = $props();
 

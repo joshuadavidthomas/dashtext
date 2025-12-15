@@ -1,8 +1,7 @@
 import { eq, desc, isNull } from 'drizzle-orm';
-import { getDb, drafts } from '$lib/db';
-import type { DraftAPI, DraftData, DraftInternal } from '@dashtext/lib';
+import { getDb, drafts, type Draft, type NewDraft } from '$lib/db';
+import type { DraftAPI, DraftData } from '@dashtext/lib';
 import { generateUUID } from '@dashtext/lib';
-import type { Draft } from '$lib/db/schema';
 
 /**
  * Convert Drizzle row (camelCase) to public DraftData (snake_case, UUID only)

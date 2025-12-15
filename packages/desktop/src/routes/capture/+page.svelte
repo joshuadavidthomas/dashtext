@@ -27,7 +27,7 @@
     saving = true;
     try {
       const draft = await drafts.create();
-      await drafts.save(draft.id, content.trim());
+      await drafts.save(draft.uuid, content.trim());
       await closeCapture();
     } finally {
       saving = false;
@@ -38,10 +38,10 @@
     const content = getContent();
     if (!content.trim() || saving) return;
 
-    saving = true;
+     saving = true;
     try {
       const draft = await drafts.create();
-      await drafts.save(draft.id, content.trim());
+      await drafts.save(draft.uuid, content.trim());
       clearEditor();
     } finally {
       saving = false;
