@@ -27,13 +27,13 @@ fn get_migrations() -> Vec<Migration> {
         Migration {
             version: 1,
             description: "create_draft_table",
-            sql: include_str!("../../../../lib/src/db/migrations/0000_clean_blockbuster.sql"),
+            sql: include_str!("../../../lib/src/db/migrations/0000_clean_blockbuster.sql"),
             kind: MigrationKind::Up,
         },
         Migration {
             version: 2,
             description: "add_core_data_model_hardening",
-            sql: include_str!("../../../../lib/src/db/migrations/0001_gigantic_sharon_ventura.sql"),
+            sql: include_str!("../../../lib/src/db/migrations/0001_gigantic_sharon_ventura.sql"),
             kind: MigrationKind::Up,
         },
     ]
