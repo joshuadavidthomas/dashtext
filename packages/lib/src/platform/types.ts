@@ -33,4 +33,8 @@ export interface PlatformCapabilities {
 
   /** Refresh drafts list from storage */
   refreshDrafts(): Promise<Draft[]>;
+
+  /** Navigation capabilities */
+  replaceUrl: (url: string) => void;
+  navigateTo: (url: string) => Promise<void>;
 }

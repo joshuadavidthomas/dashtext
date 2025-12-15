@@ -6,10 +6,14 @@ import type { DraftData } from '../api/types';
  * Draft - reactive draft model with derived presentation properties
  */
 export class Draft {
-  id: number;
+  id: number;            // Internal ID
+  uuid: string;          // Public UUID
   content = $state('');
   created_at: string;
   modified_at = $state('');
+  deleted_at = $state<string | undefined>(undefined);
+  archived = $state(false);
+  pinned = $state(false);
 
   title = $derived(this.content.split('\n')[0].trim() || 'Untitled');
 
@@ -37,11 +41,19 @@ export class Draft {
     });
   });
 
-  constructor(data: DraftData) {
-    this.id = data.id;
+  isDeleted = $derived(this.deleted_at !== undefined);
+  isActive = $derived(!this.deleted_at && !this.archived);
+
+  constructor(data: DraftData & { id?: number }) {
+    this.uuid = data.uuid;
     this.content = data.content;
     this.created_at = data.created_at;
     this.modified_at = data.modified_at;
+    this.deleted_at = data.deleted_at;
+    this.archived = data.archived || false;
+    this.pinned = data.pinned || false;
+    // Internal ID for backend operations (if available)
+    this.id = data.id || 0;
   }
 }
 
@@ -50,8 +62,14 @@ export class Draft {
  */
 export interface DraftsAPI {
   createDraft(): Promise<Draft>;
-  saveDraft(id: number, content: string): Promise<DraftData>;
-  deleteDraft(id: number): Promise<void>;
+  saveDraft(uuid: string, content: string): Promise<DraftData>;
+  deleteDraft(uuid: string): Promise<void>;
+  archiveDraft(uuid: string): Promise<DraftData>;
+  unarchiveDraft(uuid: string): Promise<DraftData>;
+  pinDraft(uuid: string): Promise<DraftData>;
+  unpinDraft(uuid: string): Promise<DraftData>;
+  restoreDraft(uuid: string): Promise<DraftData>;
+  hardDeleteDraft(uuid: string): Promise<void>;
   replaceUrl(url: string): void;
   navigateTo(url: string): void;
 }
@@ -77,10 +95,15 @@ export class DraftsState {
   setCurrentDraft(draft: Draft | null) {
     if (draft) {
       // Use existing draft from our array to maintain object identity for reactivity
-      this.currentDraft = this.drafts.find((d) => d.id === draft.id) ?? draft;
+      this.currentDraft = this.drafts.find((d) => d.uuid === draft.uuid) ?? draft;
     } else {
       this.currentDraft = null;
     }
+  }
+
+  setCurrentDraftByUuid(uuid: string) {
+    const draft = this.drafts.find((d) => d.uuid === uuid);
+    this.currentDraft = draft || null;
   }
 
   updateContent(content: string) {
@@ -102,17 +125,17 @@ export class DraftsState {
       // NEW DRAFT: create in DB, update local state, replaceState URL
       const newDraft = await this.api.createDraft();
       newDraft.content = this.pendingContent;
-      await this.api.saveDraft(newDraft.id, this.pendingContent);
+      await this.api.saveDraft(newDraft.uuid, this.pendingContent);
 
       // Update local state (triggers reactive updates)
       this.drafts = [newDraft, ...this.drafts];
       this.currentDraft = newDraft;
 
       // Update URL without navigation (preserves focus)
-      this.api.replaceUrl(`/drafts/${newDraft.id}`);
+      this.api.replaceUrl(`/drafts/${newDraft.uuid}`);
     } else if (this.currentDraft !== null) {
       // EXISTING DRAFT: just save
-      const updated = await this.api.saveDraft(this.currentDraft.id, this.pendingContent);
+      const updated = await this.api.saveDraft(this.currentDraft.uuid, this.pendingContent);
       this.currentDraft.modified_at = updated.modified_at;
     }
 
@@ -122,17 +145,53 @@ export class DraftsState {
   async deleteCurrentDraft() {
     if (!this.currentDraft) return;
 
-    const id = this.currentDraft.id;
-    await this.api.deleteDraft(id);
+    const uuid = this.currentDraft.uuid;
+    await this.api.deleteDraft(uuid);
 
     // Update local state
-    this.drafts = this.drafts.filter((d) => d.id !== id);
+    this.drafts = this.drafts.filter((d) => d.uuid !== uuid);
 
     // Navigate to next draft or new
     if (this.drafts.length > 0) {
-      this.api.navigateTo(`/drafts/${this.drafts[0].id}`);
+      this.api.navigateTo(`/drafts/${this.drafts[0].uuid}`);
     } else {
       this.api.navigateTo('/drafts/new');
+    }
+  }
+
+  async archiveCurrentDraft() {
+    if (!this.currentDraft) return;
+    
+    const updated = await this.api.archiveDraft(this.currentDraft.uuid);
+    this.currentDraft.archived = updated.archived || false;
+    
+    // Navigate to next draft if archived
+    if (updated.archived) {
+      const remainingDrafts = this.drafts.filter(d => d.uuid !== this.currentDraft!.uuid && !d.archived);
+      if (remainingDrafts.length > 0) {
+        this.api.navigateTo(`/drafts/${remainingDrafts[0].uuid}`);
+      } else {
+        this.api.navigateTo('/drafts/new');
+      }
+    }
+  }
+
+  async togglePinCurrentDraft() {
+    if (!this.currentDraft) return;
+    
+    if (this.currentDraft.pinned) {
+      const updated = await this.api.unpinDraft(this.currentDraft.uuid);
+      this.currentDraft.pinned = updated.pinned || false;
+    } else {
+      const updated = await this.api.pinDraft(this.currentDraft.uuid);
+      this.currentDraft.pinned = updated.pinned || false;
+      
+      // Update pinned status on other drafts (single pin constraint)
+      this.drafts.forEach(d => {
+        if (d.uuid !== this.currentDraft!.uuid && d.pinned) {
+          d.pinned = false;
+        }
+      });
     }
   }
 }
