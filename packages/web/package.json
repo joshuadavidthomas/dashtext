@@ -16,7 +16,6 @@
   "dependencies": {
     "@dashtext/lib": "workspace:*",
     "drizzle-orm": "catalog:",
-    "idb": "^8.0.3",
     "sql.js": "^1.13.0"
   },
   "devDependencies": {
