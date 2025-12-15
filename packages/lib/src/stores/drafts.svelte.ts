@@ -1,6 +1,7 @@
 import { createContext, untrack } from 'svelte';
 import { useDebounce } from 'runed';
 import type { DraftData, DraftAPI } from '../api/types';
+import type { PlatformCapabilities } from '../platform/types';
 
 /**
  * Draft - reactive draft model with derived presentation properties
@@ -69,11 +70,25 @@ export class DraftsState {
   private pendingContent: string | null = null;
   private debouncedSave: ReturnType<typeof useDebounce>;
   private api: DraftAPI;
+  private platform?: PlatformCapabilities;
 
-  constructor(initialDrafts: Draft[], api: DraftAPI) {
+  constructor(initialDrafts: Draft[], api: DraftAPI, platform?: PlatformCapabilities) {
     this.drafts = initialDrafts;
     this.api = api;
+    this.platform = platform;
     this.debouncedSave = useDebounce(() => this.performSave(), () => 500);
+  }
+
+  // Internal navigation handling - delegates to platform when available
+  private async handleNavigation(navInfo: {replaceUrl?: string, newDraftUuid?: string} | {navigateTo?: string}) {
+    if (!this.platform) return;
+    
+    if ('replaceUrl' in navInfo && navInfo.replaceUrl) {
+      this.platform.replaceUrl(navInfo.replaceUrl);
+    }
+    if ('navigateTo' in navInfo && navInfo.navigateTo) {
+      await this.platform.navigateTo(navInfo.navigateTo);
+    }
   }
 
   setCurrentDraft(draft: Draft | null) {
@@ -98,14 +113,14 @@ export class DraftsState {
     this.debouncedSave();
   }
 
-  async flushPendingSave(): Promise<{replaceUrl?: string, newDraftUuid?: string}> {
-    // Cancel debounce and run immediately to get return value
+  async flushPendingSave(): Promise<void> {
+    // Cancel debounce and run immediately
     this.debouncedSave.cancel();
-    return await this.performSave();
+    await this.performSave();
   }
 
-  private async performSave(): Promise<{replaceUrl?: string, newDraftUuid?: string}> {
-    if (this.pendingContent === null) return {};
+  private async performSave(): Promise<void> {
+    if (this.pendingContent === null) return;
 
     if (this.currentDraft === null && this.pendingContent.trim()) {
       // NEW DRAFT: create in DB, update local state, return navigation hint
@@ -120,20 +135,19 @@ export class DraftsState {
 
       this.pendingContent = null;
       
-      // Return navigation hint for caller
-      return { replaceUrl: `/drafts/${newDraft.uuid}`, newDraftUuid: newDraft.uuid };
+      // Handle navigation internally
+      await this.handleNavigation({ replaceUrl: `/drafts/${newDraft.uuid}`, newDraftUuid: newDraft.uuid });
     } else if (this.currentDraft !== null) {
       // EXISTING DRAFT: just save
       const updated = await this.api.save(this.currentDraft.uuid, this.pendingContent);
       this.currentDraft.modified_at = updated.modified_at;
     }
 
-    this.pendingContent = null;
-    return {};
+this.pendingContent = null;
   }
 
-  async deleteCurrentDraft(): Promise<{navigateTo?: string}> {
-    if (!this.currentDraft) return {};
+  async deleteCurrentDraft(): Promise<void> {
+    if (!this.currentDraft) return;
 
     const uuid = this.currentDraft.uuid;
     await this.api.delete(uuid);
@@ -141,31 +155,29 @@ export class DraftsState {
     // Update local state
     this.drafts = this.drafts.filter((d) => d.uuid !== uuid);
 
-    // Return navigation hint for caller
+    // Handle navigation internally
     if (this.drafts.length > 0) {
-      return { navigateTo: `/drafts/${this.drafts[0].uuid}` };
+      await this.handleNavigation({ navigateTo: `/drafts/${this.drafts[0].uuid}` });
     } else {
-      return { navigateTo: '/drafts/new' };
+      await this.handleNavigation({ navigateTo: '/drafts/new' });
     }
   }
 
-  async archiveCurrentDraft(): Promise<{navigateTo?: string}> {
-    if (!this.currentDraft) return {};
+  async archiveCurrentDraft(): Promise<void> {
+if (!this.currentDraft) return;
     
     const updated = await this.api.archive(this.currentDraft.uuid);
     this.currentDraft.archived = updated.archived || false;
     
-    // Return navigation hint for caller if archived
+    // Handle navigation internally if archived
     if (updated.archived) {
       const remainingDrafts = this.drafts.filter(d => d.uuid !== this.currentDraft!.uuid && !d.archived);
-      if (remainingDrafts.length > 0) {
-        return { navigateTo: `/drafts/${remainingDrafts[0].uuid}` };
+      if (remainingDrafts.length >0) {
+        await this.handleNavigation({ navigateTo: `/drafts/${remainingDrafts[0].uuid}` });
       } else {
-        return { navigateTo: '/drafts/new' };
+        await this.handleNavigation({ navigateTo: '/drafts/new' });
       }
     }
-    
-    return {};
   }
 
   async togglePinCurrentDraft() {
@@ -190,8 +202,8 @@ export class DraftsState {
 
 export const [getDraftsState, setDraftsState] = createContext<DraftsState>();
 
-export const createDraftsState = (getInitialDrafts: () => Draft[], api: DraftAPI) => {
-  const drafts = new DraftsState(untrack(getInitialDrafts), api);
+export const createDraftsState = (getInitialDrafts: () => Draft[], api: DraftAPI, platform?: PlatformCapabilities) => {
+  const drafts = new DraftsState(untrack(getInitialDrafts), api, platform);
   setDraftsState(drafts);
   return drafts;
 };

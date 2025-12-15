@@ -29,8 +29,8 @@
   }
 
   async function handleDelete() {
-    const navigationHandlers = getContext<{handleDraftDelete: () => Promise<void>, handleDraftSave: () => Promise<void>, handleDraftArchive: () => Promise<void>}>('navigationHandlers');
-    await navigationHandlers.handleDraftDelete();
+    const draftsState = getDraftsState();
+    await draftsState.deleteCurrentDraft();
   }
 
   async function handleQuickCapture() {

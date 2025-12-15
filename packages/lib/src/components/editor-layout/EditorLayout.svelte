@@ -28,37 +28,8 @@
   // Initialize editor context
   createEditorContext();
 
-  // Initialize drafts state with direct API usage
-  const draftsState = createDraftsState(() => drafts, platform.draftsAPI);
-
-  // Navigation handling methods
-  async function handleDraftSave() {
-    const navInfo = await draftsState.flushPendingSave();
-    if (navInfo.replaceUrl) {
-      platform.replaceUrl(navInfo.replaceUrl);
-    }
-  }
-
-  async function handleDraftDelete() {
-    const navInfo = await draftsState.deleteCurrentDraft();
-    if (navInfo.navigateTo) {
-      await platform.navigateTo(navInfo.navigateTo);
-    }
-  }
-
-  async function handleDraftArchive() {
-    const navInfo = await draftsState.archiveCurrentDraft();
-    if (navInfo.navigateTo) {
-      await platform.navigateTo(navInfo.navigateTo);
-    }
-  }
-
-  // Provide navigation handlers in context for child components
-  setContext('navigationHandlers', {
-    handleDraftSave,
-    handleDraftDelete,
-    handleDraftArchive
-  });
+  // Initialize drafts state with direct API usage and platform for navigation
+  const draftsState = createDraftsState(() => drafts, platform.draftsAPI, platform);
 
   // Platform-agnostic focus refresh
   $effect(() => {
