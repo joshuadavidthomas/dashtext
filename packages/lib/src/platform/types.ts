@@ -1,4 +1,5 @@
-import type { DraftsAPI, Draft } from '../stores';
+import type { DraftAPI } from '../api/types';
+import type { Draft } from '../stores';
 
 /**
  * Platform capabilities interface - allows shared components to adapt
@@ -28,8 +29,8 @@ export interface PlatformCapabilities {
     open(): Promise<void>;
   } | null;
 
-  /** Drafts API adapter - platform-specific storage implementation */
-  draftsAPI: DraftsAPI;
+  /** Drafts API - platform-specific storage implementation */
+  draftsAPI: DraftAPI;
 
   /** Refresh drafts list from storage */
   refreshDrafts(): Promise<Draft[]>;

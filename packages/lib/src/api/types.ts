@@ -1,3 +1,5 @@
+import type { Draft } from '../stores';
+
 export interface DraftData {
   uuid: string;
   content: string;
@@ -26,3 +28,5 @@ export interface DraftAPI {
   delete(uuid: string): Promise<void>;
   hardDelete(uuid: string): Promise<void>;
 }
+
+

@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { createEditorContext } from '../editor';
-  import { createDraftsState, Draft, type Draft } from '../../stores';
+  import { createDraftsState, type Draft } from '../../stores';
   import { getPlatform } from '../../platform';
+  import { setContext } from 'svelte';
   import * as Sidebar from '../ui/sidebar';
   import * as Tooltip from '../ui/tooltip';
   import DraftsSidebar from './DraftsSidebar.svelte';
@@ -27,42 +28,37 @@
   // Initialize editor context
   createEditorContext();
 
-  // Create API adapter that maps new DraftAPI to old DraftsAPI interface
-  const apiAdapter = {
-    async createDraft() {
-      const draftData = await platform.draftsAPI.create();
-      return new Draft({ ...draftData, id: 0 }); // Internal ID not exposed
-    },
-    async saveDraft(uuid: string, content: string) {
-      return platform.draftsAPI.save(uuid, content);
-    },
-    async deleteDraft(uuid: string) {
-      return platform.draftsAPI.delete(uuid);
-    },
-    async archiveDraft(uuid: string) {
-      return platform.draftsAPI.archive(uuid);
-    },
-    async unarchiveDraft(uuid: string) {
-      return platform.draftsAPI.unarchive(uuid);
-    },
-    async pinDraft(uuid: string) {
-      return platform.draftsAPI.pin(uuid);
-    },
-    async unpinDraft(uuid: string) {
-      return platform.draftsAPI.unpin(uuid);
-    },
-    async restoreDraft(uuid: string) {
-      return platform.draftsAPI.restore(uuid);
-    },
-    async hardDeleteDraft(uuid: string) {
-      return platform.draftsAPI.hardDelete(uuid);
-    },
-    replaceUrl: platform.replaceUrl,
-    navigateTo: platform.navigateTo,
-  };
+  // Initialize drafts state with direct API usage
+  const draftsState = createDraftsState(() => drafts, platform.draftsAPI);
 
-  // Initialize drafts state with adapted API
-  const draftsState = createDraftsState(() => drafts, apiAdapter);
+  // Navigation handling methods
+  async function handleDraftSave() {
+    const navInfo = await draftsState.flushPendingSave();
+    if (navInfo.replaceUrl) {
+      platform.replaceUrl(navInfo.replaceUrl);
+    }
+  }
+
+  async function handleDraftDelete() {
+    const navInfo = await draftsState.deleteCurrentDraft();
+    if (navInfo.navigateTo) {
+      await platform.navigateTo(navInfo.navigateTo);
+    }
+  }
+
+  async function handleDraftArchive() {
+    const navInfo = await draftsState.archiveCurrentDraft();
+    if (navInfo.navigateTo) {
+      await platform.navigateTo(navInfo.navigateTo);
+    }
+  }
+
+  // Provide navigation handlers in context for child components
+  setContext('navigationHandlers', {
+    handleDraftSave,
+    handleDraftDelete,
+    handleDraftArchive
+  });
 
   // Platform-agnostic focus refresh
   $effect(() => {
