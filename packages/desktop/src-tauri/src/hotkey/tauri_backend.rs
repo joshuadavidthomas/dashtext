@@ -49,11 +49,6 @@ impl HotkeyManager for TauriHotkeyManager {
             })
             .map_err(|e| format!("Failed to register hotkey: {}", e))?;
 
-        self.app
-            .global_shortcut()
-            .register(shortcut)
-            .map_err(|e| format!("Failed to register shortcut: {}", e))?;
-
         self.registered.store(true, Ordering::SeqCst);
         tracing::info!("Registered global hotkey via Tauri Global Shortcut");
         Ok(())

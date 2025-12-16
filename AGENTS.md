@@ -31,6 +31,34 @@ bun run check
 bun run check:watch
 ```
 
+## ⚠️ CRITICAL: Never Start Dev Servers
+
+**NEVER run `bun run dev`, `bun run tauri dev`, `npm start`, or any long-running development server automatically.**
+
+These commands:
+- Block the terminal indefinitely
+- Prevent you from executing further commands
+- Cannot be easily stopped in this environment
+- Make it impossible to continue the session
+
+**If the user wants to test:**
+1. Tell them the command to run manually: `bun run tauri dev`
+2. Describe what to look for in the logs
+3. Let THEM start the server in their own terminal
+4. NEVER run it yourself
+
+**Acceptable commands:**
+- ✅ `cargo check` - Quick compilation check
+- ✅ `cargo build` - Build without running
+- ✅ `bun run check` - Type checking only
+- ✅ `bun run build` - Build static assets
+
+**NEVER run:**
+- ❌ `bun run dev` or `npm run dev`
+- ❌ `bun run tauri dev` or any `*:dev` command
+- ❌ Any command with `--watch` or `-w` flags
+- ❌ Background processes with `&` for dev servers
+
 ## Architecture
 
 ### Frontend (SvelteKit + Svelte 5)
