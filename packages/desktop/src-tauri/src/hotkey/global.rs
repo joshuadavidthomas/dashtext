@@ -3,13 +3,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::Emitter;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
-pub struct TauriHotkeyManager {
+pub struct GlobalShortcutManager {
     app: tauri::AppHandle,
     shortcut: Shortcut,
     registered: AtomicBool,
 }
 
-impl TauriHotkeyManager {
+impl GlobalShortcutManager {
     pub fn new(app: tauri::AppHandle, shortcut_str: &str) -> Result<Self, String> {
         let spec: ShortcutSpec = shortcut_str.parse()?;
         let shortcut = spec.to_tauri()?;
@@ -21,7 +21,7 @@ impl TauriHotkeyManager {
     }
 }
 
-impl HotkeyManager for TauriHotkeyManager {
+impl HotkeyManager for GlobalShortcutManager {
     fn register(&self) -> Result<(), String> {
         if self.registered.load(Ordering::SeqCst) {
             return Ok(());
@@ -39,7 +39,7 @@ impl HotkeyManager for TauriHotkeyManager {
             .map_err(|e| format!("Failed to register hotkey: {}", e))?;
 
         self.registered.store(true, Ordering::SeqCst);
-        tracing::info!("Registered global hotkey via Tauri Global Shortcut");
+        tracing::info!("Registered global hotkey");
         Ok(())
     }
 
