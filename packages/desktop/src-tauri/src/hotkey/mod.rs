@@ -21,11 +21,11 @@ pub trait HotkeyManager: Send + Sync {
 }
 
 /// Create the appropriate HotkeyManager for the current platform
-pub fn create_manager(app: tauri::AppHandle) -> Result<Arc<dyn HotkeyManager>, String> {
+pub fn create_manager(app: tauri::AppHandle, shortcut: &str) -> Result<Arc<dyn HotkeyManager>, String> {
     #[cfg(target_os = "linux")]
     {
         // Try evdev first on Linux
-        match evdev_backend::EvdevHotkeyManager::new(app.clone()) {
+        match evdev_backend::EvdevHotkeyManager::new(app.clone(), shortcut) {
             Ok(manager) => {
                 tracing::info!("Using evdev backend for hotkeys");
                 return Ok(Arc::new(manager));
@@ -39,6 +39,6 @@ pub fn create_manager(app: tauri::AppHandle) -> Result<Arc<dyn HotkeyManager>, S
     
     // Use Tauri Global Shortcut for macOS, Windows, and Linux fallback
     tracing::info!("Using Tauri Global Shortcut backend for hotkeys");
-    let manager = tauri_backend::TauriHotkeyManager::new(app)?;
+    let manager = tauri_backend::TauriHotkeyManager::new(app, shortcut)?;
     Ok(Arc::new(manager))
 }

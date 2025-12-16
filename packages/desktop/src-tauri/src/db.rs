@@ -36,5 +36,11 @@ fn get_migrations() -> Vec<Migration> {
             sql: include_str!("../../../lib/src/db/migrations/0001_gigantic_sharon_ventura.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "add_settings_table",
+            sql: include_str!("../../../lib/src/db/migrations/0002_add_settings_table.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }

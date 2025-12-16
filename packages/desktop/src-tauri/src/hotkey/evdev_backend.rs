@@ -9,13 +9,15 @@ use tauri::Emitter;
 
 pub struct EvdevHotkeyManager {
     app: tauri::AppHandle,
+    target_key: Key,
+    required_modifiers: HashSet<Key>,
     registered: AtomicBool,
     stop_flag: Arc<AtomicBool>,
     listener: Arc<Mutex<Option<std::thread::JoinHandle<()>>>>,
 }
 
 impl EvdevHotkeyManager {
-    pub fn new(app: tauri::AppHandle) -> Result<Self, String> {
+    pub fn new(app: tauri::AppHandle, shortcut_str: &str) -> Result<Self, String> {
         // Check for input group permissions
         match permissions::check_input_group() {
             Ok(true) => {
@@ -32,12 +34,105 @@ impl EvdevHotkeyManager {
             }
         }
 
+        // Parse shortcut string
+        let (target_key, required_modifiers) = Self::parse_shortcut(shortcut_str)?;
+
         Ok(Self {
             app,
+            target_key,
+            required_modifiers,
             registered: AtomicBool::new(false),
             stop_flag: Arc::new(AtomicBool::new(false)),
             listener: Arc::new(Mutex::new(None)),
         })
+    }
+
+    fn parse_shortcut(shortcut_str: &str) -> Result<(Key, HashSet<Key>), String> {
+        // Split the shortcut string by '+' to extract modifiers and key
+        let parts: Vec<&str> = shortcut_str.split('+').map(|s| s.trim()).collect();
+        
+        if parts.is_empty() {
+            return Err("Empty shortcut string".to_string());
+        }
+
+        let mut required_modifiers = HashSet::new();
+        let key_str = parts.last().unwrap();
+
+        // Parse modifiers
+        for part in &parts[..parts.len() - 1] {
+            match *part {
+                "CommandOrControl" | "Control" | "Ctrl" => {
+                    // For evdev on Linux, we always use Ctrl (not Command)
+                    required_modifiers.insert(Key::KEY_LEFTCTRL);
+                    required_modifiers.insert(Key::KEY_RIGHTCTRL);
+                }
+                "Command" | "Cmd" | "Super" => {
+                    required_modifiers.insert(Key::KEY_LEFTMETA);
+                    required_modifiers.insert(Key::KEY_RIGHTMETA);
+                }
+                "Shift" => {
+                    required_modifiers.insert(Key::KEY_LEFTSHIFT);
+                    required_modifiers.insert(Key::KEY_RIGHTSHIFT);
+                }
+                "Alt" | "Option" => {
+                    required_modifiers.insert(Key::KEY_LEFTALT);
+                    required_modifiers.insert(Key::KEY_RIGHTALT);
+                }
+                _ => {
+                    return Err(format!("Unknown modifier: {}", part));
+                }
+            }
+        }
+
+        // Parse target key
+        let target_key = Self::parse_key(key_str)?;
+
+        Ok((target_key, required_modifiers))
+    }
+
+    fn parse_key(key: &str) -> Result<Key, String> {
+        match key {
+            "A" => Ok(Key::KEY_A),
+            "B" => Ok(Key::KEY_B),
+            "C" => Ok(Key::KEY_C),
+            "D" => Ok(Key::KEY_D),
+            "E" => Ok(Key::KEY_E),
+            "F" => Ok(Key::KEY_F),
+            "G" => Ok(Key::KEY_G),
+            "H" => Ok(Key::KEY_H),
+            "I" => Ok(Key::KEY_I),
+            "J" => Ok(Key::KEY_J),
+            "K" => Ok(Key::KEY_K),
+            "L" => Ok(Key::KEY_L),
+            "M" => Ok(Key::KEY_M),
+            "N" => Ok(Key::KEY_N),
+            "O" => Ok(Key::KEY_O),
+            "P" => Ok(Key::KEY_P),
+            "Q" => Ok(Key::KEY_Q),
+            "R" => Ok(Key::KEY_R),
+            "S" => Ok(Key::KEY_S),
+            "T" => Ok(Key::KEY_T),
+            "U" => Ok(Key::KEY_U),
+            "V" => Ok(Key::KEY_V),
+            "W" => Ok(Key::KEY_W),
+            "X" => Ok(Key::KEY_X),
+            "Y" => Ok(Key::KEY_Y),
+            "Z" => Ok(Key::KEY_Z),
+            "0" => Ok(Key::KEY_0),
+            "1" => Ok(Key::KEY_1),
+            "2" => Ok(Key::KEY_2),
+            "3" => Ok(Key::KEY_3),
+            "4" => Ok(Key::KEY_4),
+            "5" => Ok(Key::KEY_5),
+            "6" => Ok(Key::KEY_6),
+            "7" => Ok(Key::KEY_7),
+            "8" => Ok(Key::KEY_8),
+            "9" => Ok(Key::KEY_9),
+            "Space" => Ok(Key::KEY_SPACE),
+            "Enter" => Ok(Key::KEY_ENTER),
+            "Escape" => Ok(Key::KEY_ESC),
+            _ => Err(format!("Unsupported key: {}", key)),
+        }
     }
 }
 
@@ -59,17 +154,19 @@ impl HotkeyManager for EvdevHotkeyManager {
         
         let stop_flag = self.stop_flag.clone();
         let app = self.app.clone();
+        let target_key = self.target_key;
+        let required_modifiers = self.required_modifiers.clone();
 
         // Spawn the listener thread
         let listener_handle = std::thread::spawn(move || {
-            evdev_listener_loop(devices, app, stop_flag);
+            evdev_listener_loop(devices, app, stop_flag, target_key, required_modifiers);
         });
 
         // Store the listener handle
         *self.listener.lock().unwrap() = Some(listener_handle);
 
         self.registered.store(true, Ordering::SeqCst);
-        tracing::info!("Registered global hotkey via evdev (Ctrl+Shift+C)");
+        tracing::info!("Registered global hotkey via evdev");
         Ok(())
     }
 
@@ -166,6 +263,8 @@ fn evdev_listener_loop(
     device_paths: Vec<PathBuf>,
     app: tauri::AppHandle,
     stop_flag: Arc<AtomicBool>,
+    target_key: Key,
+    modifier_keys: HashSet<Key>,
 ) {
     // Open all keyboard devices in non-blocking mode
     let mut devices: Vec<Device> = device_paths
@@ -194,13 +293,6 @@ fn evdev_listener_loop(
         tracing::error!("No keyboard devices could be opened");
         return;
     }
-
-    // Define the hotkey: Ctrl+Shift+C
-    let target_key = Key::KEY_C;
-    let modifier_keys: HashSet<Key> = [Key::KEY_LEFTCTRL, Key::KEY_RIGHTCTRL, Key::KEY_LEFTSHIFT, Key::KEY_RIGHTSHIFT]
-        .iter()
-        .copied()
-        .collect();
 
     // Track currently held modifier keys
     let mut active_modifiers: HashSet<Key> = HashSet::new();
@@ -245,12 +337,38 @@ fn evdev_listener_loop(
                         // Check target key
                         if key == target_key {
                             // Check if required modifiers are held
-                            // We need at least one Ctrl and one Shift
-                            let has_ctrl = active_modifiers.contains(&Key::KEY_LEFTCTRL)
-                                || active_modifiers.contains(&Key::KEY_RIGHTCTRL);
-                            let has_shift = active_modifiers.contains(&Key::KEY_LEFTSHIFT)
-                                || active_modifiers.contains(&Key::KEY_RIGHTSHIFT);
-                            let modifiers_satisfied = has_ctrl && has_shift;
+                            // At least one of each required modifier type must be held
+                            // Group modifiers by type (left/right variants)
+                            let mut has_ctrl = false;
+                            let mut has_shift = false;
+                            let mut has_alt = false;
+                            let mut has_meta = false;
+
+                            for modifier in &active_modifiers {
+                                match *modifier {
+                                    Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => has_ctrl = true,
+                                    Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => has_shift = true,
+                                    Key::KEY_LEFTALT | Key::KEY_RIGHTALT => has_alt = true,
+                                    Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => has_meta = true,
+                                    _ => {}
+                                }
+                            }
+
+                            // Check if all required modifier groups are satisfied
+                            let needs_ctrl = modifier_keys.contains(&Key::KEY_LEFTCTRL) 
+                                || modifier_keys.contains(&Key::KEY_RIGHTCTRL);
+                            let needs_shift = modifier_keys.contains(&Key::KEY_LEFTSHIFT) 
+                                || modifier_keys.contains(&Key::KEY_RIGHTSHIFT);
+                            let needs_alt = modifier_keys.contains(&Key::KEY_LEFTALT) 
+                                || modifier_keys.contains(&Key::KEY_RIGHTALT);
+                            let needs_meta = modifier_keys.contains(&Key::KEY_LEFTMETA) 
+                                || modifier_keys.contains(&Key::KEY_RIGHTMETA);
+
+                            let modifiers_satisfied = 
+                                (!needs_ctrl || has_ctrl) &&
+                                (!needs_shift || has_shift) &&
+                                (!needs_alt || has_alt) &&
+                                (!needs_meta || has_meta);
 
                             if modifiers_satisfied {
                                 match value {
