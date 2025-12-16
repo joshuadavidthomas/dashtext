@@ -4,9 +4,6 @@ mod tauri_backend;
 #[cfg(target_os = "linux")]
 mod evdev_backend;
 
-#[cfg(target_os = "linux")]
-mod permissions;
-
 use std::sync::Arc;
 
 /// Trait for cross-platform hotkey management
