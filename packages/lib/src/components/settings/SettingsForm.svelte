@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Switch } from '../ui/switch';
+	import HotkeyInput from './HotkeyInput.svelte';
 	import { getSettingsState } from '../../stores';
 	import { getPlatform } from '../../platform';
 	import { onMount } from 'svelte';
@@ -70,28 +71,20 @@
 			<h3 class="text-sm font-medium text-[var(--cm-foreground)]">Capture</h3>
 
 			<div class="space-y-2">
-				<label for="capture-shortcut" class="text-sm font-medium text-[var(--cm-foreground)]">
+				<div class="text-sm font-medium text-[var(--cm-foreground)]">
 					Quick Capture Shortcut
-				</label>
+				</div>
 				<p class="text-xs text-[var(--cm-comment)]">
 					Global keyboard shortcut to open quick capture window
 				</p>
-				<div class="flex gap-2">
-					<input
-						id="capture-shortcut"
-						type="text"
-						bind:value={captureShortcut}
-						onblur={updateCaptureShortcut}
-						class="flex-1 rounded bg-[var(--cm-background)] border border-[var(--cm-selection)] px-3 py-2 text-sm text-[var(--cm-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--cm-accent)]"
-						placeholder="CommandOrControl+Shift+C"
-					/>
-				</div>
-				{#if shortcutError}
-					<p class="text-xs text-red-500">{shortcutError}</p>
-				{/if}
-				<p class="text-xs text-[var(--cm-comment)]">
-					Format: CommandOrControl+Shift+C (Command on macOS, Ctrl elsewhere)
-				</p>
+				<HotkeyInput
+					value={captureShortcut}
+					onchange={(newValue: string) => {
+						captureShortcut = newValue;
+						updateCaptureShortcut();
+					}}
+					error={shortcutError}
+				/>
 			</div>
 		</div>
 	{/if}
