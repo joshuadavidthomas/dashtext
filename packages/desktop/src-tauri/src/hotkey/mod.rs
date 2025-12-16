@@ -1,3 +1,4 @@
+mod shortcut;
 mod tauri_backend;
 
 #[cfg(target_os = "linux")]

@@ -1,4 +1,4 @@
-use super::{permissions, HotkeyManager};
+use super::{permissions, shortcut::ShortcutSpec, HotkeyManager};
 use evdev::{Device, InputEventKind, Key};
 use std::collections::HashSet;
 use std::os::unix::io::AsRawFd;
@@ -34,8 +34,9 @@ impl EvdevHotkeyManager {
             }
         }
 
-        // Parse shortcut string
-        let (target_key, required_modifiers) = Self::parse_shortcut(shortcut_str)?;
+        // Parse shortcut string using shared spec
+        let spec: ShortcutSpec = shortcut_str.parse()?;
+        let (target_key, required_modifiers) = spec.to_evdev()?;
 
         Ok(Self {
             app,
@@ -45,94 +46,6 @@ impl EvdevHotkeyManager {
             stop_flag: Arc::new(AtomicBool::new(false)),
             listener: Arc::new(Mutex::new(None)),
         })
-    }
-
-    fn parse_shortcut(shortcut_str: &str) -> Result<(Key, HashSet<Key>), String> {
-        // Split the shortcut string by '+' to extract modifiers and key
-        let parts: Vec<&str> = shortcut_str.split('+').map(|s| s.trim()).collect();
-        
-        if parts.is_empty() {
-            return Err("Empty shortcut string".to_string());
-        }
-
-        let mut required_modifiers = HashSet::new();
-        let key_str = parts.last().unwrap();
-
-        // Parse modifiers
-        for part in &parts[..parts.len() - 1] {
-            match *part {
-                "CommandOrControl" | "Control" | "Ctrl" => {
-                    // For evdev on Linux, we always use Ctrl (not Command)
-                    required_modifiers.insert(Key::KEY_LEFTCTRL);
-                    required_modifiers.insert(Key::KEY_RIGHTCTRL);
-                }
-                "Command" | "Cmd" | "Super" => {
-                    required_modifiers.insert(Key::KEY_LEFTMETA);
-                    required_modifiers.insert(Key::KEY_RIGHTMETA);
-                }
-                "Shift" => {
-                    required_modifiers.insert(Key::KEY_LEFTSHIFT);
-                    required_modifiers.insert(Key::KEY_RIGHTSHIFT);
-                }
-                "Alt" | "Option" => {
-                    required_modifiers.insert(Key::KEY_LEFTALT);
-                    required_modifiers.insert(Key::KEY_RIGHTALT);
-                }
-                _ => {
-                    return Err(format!("Unknown modifier: {}", part));
-                }
-            }
-        }
-
-        // Parse target key
-        let target_key = Self::parse_key(key_str)?;
-
-        Ok((target_key, required_modifiers))
-    }
-
-    fn parse_key(key: &str) -> Result<Key, String> {
-        match key {
-            "A" => Ok(Key::KEY_A),
-            "B" => Ok(Key::KEY_B),
-            "C" => Ok(Key::KEY_C),
-            "D" => Ok(Key::KEY_D),
-            "E" => Ok(Key::KEY_E),
-            "F" => Ok(Key::KEY_F),
-            "G" => Ok(Key::KEY_G),
-            "H" => Ok(Key::KEY_H),
-            "I" => Ok(Key::KEY_I),
-            "J" => Ok(Key::KEY_J),
-            "K" => Ok(Key::KEY_K),
-            "L" => Ok(Key::KEY_L),
-            "M" => Ok(Key::KEY_M),
-            "N" => Ok(Key::KEY_N),
-            "O" => Ok(Key::KEY_O),
-            "P" => Ok(Key::KEY_P),
-            "Q" => Ok(Key::KEY_Q),
-            "R" => Ok(Key::KEY_R),
-            "S" => Ok(Key::KEY_S),
-            "T" => Ok(Key::KEY_T),
-            "U" => Ok(Key::KEY_U),
-            "V" => Ok(Key::KEY_V),
-            "W" => Ok(Key::KEY_W),
-            "X" => Ok(Key::KEY_X),
-            "Y" => Ok(Key::KEY_Y),
-            "Z" => Ok(Key::KEY_Z),
-            "0" => Ok(Key::KEY_0),
-            "1" => Ok(Key::KEY_1),
-            "2" => Ok(Key::KEY_2),
-            "3" => Ok(Key::KEY_3),
-            "4" => Ok(Key::KEY_4),
-            "5" => Ok(Key::KEY_5),
-            "6" => Ok(Key::KEY_6),
-            "7" => Ok(Key::KEY_7),
-            "8" => Ok(Key::KEY_8),
-            "9" => Ok(Key::KEY_9),
-            "Space" => Ok(Key::KEY_SPACE),
-            "Enter" => Ok(Key::KEY_ENTER),
-            "Escape" => Ok(Key::KEY_ESC),
-            _ => Err(format!("Unsupported key: {}", key)),
-        }
     }
 }
 
