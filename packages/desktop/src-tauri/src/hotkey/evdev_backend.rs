@@ -4,15 +4,14 @@ use std::collections::HashSet;
 use std::os::unix::io::AsRawFd;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tauri::Emitter;
-use tokio::sync::{oneshot, Mutex};
 
 pub struct EvdevHotkeyManager {
     app: tauri::AppHandle,
     registered: AtomicBool,
-    stop_signal: Arc<Mutex<Option<oneshot::Sender<()>>>>,
-    listener: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
+    stop_flag: Arc<AtomicBool>,
+    listener: Arc<Mutex<Option<std::thread::JoinHandle<()>>>>,
 }
 
 impl EvdevHotkeyManager {
@@ -36,7 +35,7 @@ impl EvdevHotkeyManager {
         Ok(Self {
             app,
             registered: AtomicBool::new(false),
-            stop_signal: Arc::new(Mutex::new(None)),
+            stop_flag: Arc::new(AtomicBool::new(false)),
             listener: Arc::new(Mutex::new(None)),
         })
     }
@@ -55,21 +54,19 @@ impl HotkeyManager for EvdevHotkeyManager {
 
         tracing::info!("Found {} keyboard device(s)", devices.len());
 
-        let (stop_tx, stop_rx) = oneshot::channel();
+        // Reset stop flag
+        self.stop_flag.store(false, Ordering::SeqCst);
+        
+        let stop_flag = self.stop_flag.clone();
         let app = self.app.clone();
 
-        // Spawn the listener task
-        let listener_handle = tokio::task::spawn_blocking(move || {
-            evdev_listener_loop(devices, app, stop_rx);
+        // Spawn the listener thread
+        let listener_handle = std::thread::spawn(move || {
+            evdev_listener_loop(devices, app, stop_flag);
         });
 
-        // Store the stop signal and listener handle
-        let stop_signal = self.stop_signal.clone();
-        let listener = self.listener.clone();
-        tokio::spawn(async move {
-            *stop_signal.lock().await = Some(stop_tx);
-            *listener.lock().await = Some(listener_handle);
-        });
+        // Store the listener handle
+        *self.listener.lock().unwrap() = Some(listener_handle);
 
         self.registered.store(true, Ordering::SeqCst);
         tracing::info!("Registered global hotkey via evdev (Ctrl+Shift+C)");
@@ -85,17 +82,17 @@ impl HotkeyManager for EvdevHotkeyManager {
             return Ok(());
         }
 
-        // Send stop signal and abort the listener task
-        let stop_signal = self.stop_signal.clone();
-        let listener = self.listener.clone();
-        tokio::spawn(async move {
-            if let Some(stop) = stop_signal.lock().await.take() {
-                let _ = stop.send(());
-            }
-            if let Some(handle) = listener.lock().await.take() {
-                handle.abort();
-            }
-        });
+        // Signal the listener thread to stop
+        self.stop_flag.store(true, Ordering::SeqCst);
+
+        // Wait for the thread to finish (with timeout)
+        if let Some(handle) = self.listener.lock().unwrap().take() {
+            // Give the thread some time to notice the stop flag and exit
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            
+            // Try to join, but don't block forever
+            let _ = handle.join();
+        }
 
         self.registered.store(false, Ordering::SeqCst);
         tracing::info!("Unregistered evdev global hotkey");
@@ -164,11 +161,11 @@ fn find_keyboard_devices() -> Result<Vec<PathBuf>, String> {
     Ok(keyboards)
 }
 
-/// Main listener loop running in a blocking task
+/// Main listener loop running in a blocking thread
 fn evdev_listener_loop(
     device_paths: Vec<PathBuf>,
     app: tauri::AppHandle,
-    mut stop_rx: oneshot::Receiver<()>,
+    stop_flag: Arc<AtomicBool>,
 ) {
     // Open all keyboard devices in non-blocking mode
     let mut devices: Vec<Device> = device_paths
@@ -218,13 +215,10 @@ fn evdev_listener_loop(
     );
 
     loop {
-        // Check for stop signal (non-blocking)
-        match stop_rx.try_recv() {
-            Ok(_) | Err(oneshot::error::TryRecvError::Closed) => {
-                tracing::debug!("Hotkey listener stopping");
-                return;
-            }
-            Err(oneshot::error::TryRecvError::Empty) => {}
+        // Check for stop signal
+        if stop_flag.load(Ordering::SeqCst) {
+            tracing::debug!("Hotkey listener stopping");
+            return;
         }
 
         // Poll each device (all set to non-blocking mode)
