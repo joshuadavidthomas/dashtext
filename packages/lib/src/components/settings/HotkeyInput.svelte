@@ -119,7 +119,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="space-y-2">
-	<div class="flex w-full items-center gap-2">
+	<div class="flex w-full items-stretch gap-2">
 		<button
 			bind:this={inputRef}
 			type="button"
@@ -132,7 +132,7 @@
 			{#if mode === 'idle'}
 				<KbdGroup>
 					{#each displayKeys as key}
-						<Kbd>{key}</Kbd>
+						<Kbd class="border border-[var(--cm-selection)] bg-[var(--cm-background-highlight)] text-[var(--cm-foreground)]">{key}</Kbd>
 					{/each}
 				</KbdGroup>
 				{#if showSuccess}
@@ -141,7 +141,7 @@
 			{:else if previewKeys.length > 0}
 				<KbdGroup>
 					{#each previewKeys as key}
-						<Kbd>{key}</Kbd>
+						<Kbd class="border border-[var(--cm-selection)] bg-[var(--cm-background-highlight)] text-[var(--cm-foreground)]">{key}</Kbd>
 					{/each}
 				</KbdGroup>
 				<span class="text-[var(--cm-comment)]">+ ...</span>
@@ -153,7 +153,7 @@
 		{#if mode === 'idle'}
 			<button
 				type="button"
-				class="rounded border border-[var(--cm-selection)] bg-[var(--cm-background)] px-3 py-2 text-[var(--cm-comment)] transition-colors hover:border-[var(--cm-accent)] hover:text-[var(--cm-foreground)]"
+				class="flex items-center justify-center rounded border border-[var(--cm-selection)] bg-[var(--cm-background)] px-3 py-2 text-[var(--cm-comment)] transition-colors hover:border-[var(--cm-accent)] hover:text-[var(--cm-foreground)]"
 				onclick={clearShortcut}
 				aria-label="Reset to default shortcut"
 			>
