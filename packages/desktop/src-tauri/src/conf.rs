@@ -3,9 +3,6 @@ use std::sync::Arc;
 use tauri::AppHandle;
 use tokio::sync::Mutex;
 
-/// Default capture shortcut
-pub const DEFAULT_CAPTURE_SHORTCUT: &str = "CommandOrControl+Shift+C";
-
 /// Application settings state
 /// Manages active hotkey registration (database persistence handled by frontend)
 pub struct SettingsState {

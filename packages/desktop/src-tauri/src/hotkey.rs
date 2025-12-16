@@ -10,9 +10,6 @@ pub trait HotkeyManager: Send + Sync {
     /// Register the quick-capture hotkey
     fn register(&self) -> Result<(), String>;
 
-    /// Check if the hotkey is registered
-    fn is_registered(&self) -> bool;
-
     /// Unregister the hotkey
     fn unregister(&self) -> Result<(), String>;
 }

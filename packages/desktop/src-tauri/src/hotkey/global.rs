@@ -43,10 +43,6 @@ impl HotkeyManager for GlobalShortcutManager {
         Ok(())
     }
 
-    fn is_registered(&self) -> bool {
-        self.registered.load(Ordering::SeqCst)
-    }
-
     fn unregister(&self) -> Result<(), String> {
         if !self.registered.load(Ordering::SeqCst) {
             return Ok(());
