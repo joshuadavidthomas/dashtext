@@ -257,14 +257,13 @@ fn evdev_listener_loop(
                                     1 if !is_pressed => {
                                         // Key press (not repeat)
                                         is_pressed = true;
-                                        tracing::info!("Quick capture hotkey pressed (evdev)");
-                                        let _ = app.emit("hotkey:capture:pressed", ());
+                                        tracing::info!("Quick capture hotkey triggered (evdev)");
+                                        let _ = app.emit("hotkey:capture", ());
                                     }
                                     0 if is_pressed => {
                                         // Key release
                                         is_pressed = false;
                                         tracing::debug!("Quick capture hotkey released (evdev)");
-                                        let _ = app.emit("hotkey:capture:released", ());
                                     }
                                     2 => {
                                         // Key repeat - ignore
