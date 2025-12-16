@@ -3,11 +3,29 @@
 	import { setPlatformContext } from '@dashtext/lib/platform';
 	import { createSettingsContext, OnboardingDialog } from '@dashtext/lib';
 	import { desktopPlatform } from '$lib/platform';
+	import { openQuickCapture } from '$lib/components/capture';
+	import { listen } from '@tauri-apps/api/event';
 
 	let { children } = $props();
 
 	setPlatformContext(desktopPlatform);
 	createSettingsContext();
+
+	// Listen for global hotkey events
+	$effect(() => {
+		const unlisten = listen('hotkey:capture', async () => {
+			console.log('Global hotkey triggered, opening quick capture');
+			try {
+				await openQuickCapture();
+			} catch (e) {
+				console.error('Failed to open quick capture:', e);
+			}
+		});
+
+		return () => {
+			unlisten.then(fn => fn());
+		};
+	});
 </script>
 
 <OnboardingDialog />
