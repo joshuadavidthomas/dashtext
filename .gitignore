@@ -5,6 +5,8 @@
 .env.*
 .svelte-kit
 .worktrees
+AGENTS.local.md
+CLAUDE.local.md
 build
 node_modules
 package
