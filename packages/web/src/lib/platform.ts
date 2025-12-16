@@ -18,12 +18,21 @@ export const webPlatform: PlatformCapabilities = {
   quickCapture: null,
   settings: null, // Web uses dialog instead
 
+  replaceUrl: (url) => replaceState(url, {}),
+  navigateTo: (url) => goto(url),
+
   draftsAPI: {
-    createDraft: async () => drafts.create(),
-    saveDraft: async (id, content) => drafts.save(id, content),
-    deleteDraft: async (id) => drafts.delete(id),
-    replaceUrl: (url) => replaceState(url, {}),
-    navigateTo: (url) => goto(url)
+    list: async () => drafts.list(),
+    create: async () => drafts.create(),
+    get: async (uuid) => drafts.get(uuid),
+    save: async (uuid, content) => drafts.save(uuid, content),
+    archive: async (uuid) => drafts.archive(uuid),
+    unarchive: async (uuid) => drafts.unarchive(uuid),
+    pin: async (uuid) => drafts.pin(uuid),
+    unpin: async (uuid) => drafts.unpin(uuid),
+    restore: async (uuid) => drafts.restore(uuid),
+    delete: async (uuid) => drafts.delete(uuid),
+    hardDelete: async (uuid) => drafts.hardDelete(uuid),
   },
 
   refreshDrafts: () => drafts.list(),

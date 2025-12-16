@@ -13,7 +13,9 @@
 	});
 
 	// Flush pending save before navigating away
-	beforeNavigate(() => draftsState.flushPendingSave());
+	beforeNavigate(async () => {
+		await draftsState.flushPendingSave();
+	});
 </script>
 
 <Editor />

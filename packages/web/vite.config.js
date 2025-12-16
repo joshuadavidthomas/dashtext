@@ -12,5 +12,6 @@ export default defineConfig(async () => ({
     fs: {
       allow: ["../.."]
     }
-  }
+  },
+  assetsInclude: ['**/*.sql']
 }));

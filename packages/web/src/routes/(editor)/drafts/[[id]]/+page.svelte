@@ -11,7 +11,9 @@
     draftsState.setCurrentDraft(data.draft);
   });
 
-  beforeNavigate(() => draftsState.flushPendingSave());
+  beforeNavigate(async () => {
+    await draftsState.flushPendingSave();
+  });
 </script>
 
 <Editor />

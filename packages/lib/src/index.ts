@@ -5,3 +5,4 @@ export * from './components/settings';
 export * from './platform';
 export * from './stores';
 export * from './utils';
+export { drafts, type Draft as DbDraft, type NewDraft } from './db/schema';

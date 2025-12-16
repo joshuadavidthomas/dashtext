@@ -1,86 +1,157 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { eq, desc, isNull } from 'drizzle-orm';
+import { getDb, drafts, triggerAutoSave } from '$lib/db';
+import type { Draft } from '@dashtext/lib/db';
 import type { DraftAPI, DraftData } from '@dashtext/lib';
+import { generateUUID } from '@dashtext/lib';
 
-interface DashtextDB extends DBSchema {
-  drafts: {
-    key: number;
-    value: DraftData;
-    indexes: {
-      'by-modified': string;
-    };
-  };
+/**
+ * Convert Drizzle row (camelCase) to public DraftData (snake_case, UUID only)
+ */
+function toApiFormat(row: Draft): DraftData {
+	return {
+		uuid: row.uuid,
+		content: row.content,
+		created_at: row.createdAt,
+		modified_at: row.modifiedAt,
+		...(row.deletedAt && { deleted_at: row.deletedAt }),
+		...(row.archived && { archived: row.archived }),
+		...(row.pinned && { pinned: row.pinned }),
+	};
 }
 
-const DB_NAME = 'dashtext';
-const DB_VERSION = 1;
-
-let dbPromise: Promise<IDBPDatabase<DashtextDB>> | null = null;
-
-function getDB(): Promise<IDBPDatabase<DashtextDB>> {
-  if (!dbPromise) {
-    dbPromise = openDB<DashtextDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const store = db.createObjectStore('drafts', {
-          keyPath: 'id',
-          autoIncrement: true
-        });
-        store.createIndex('by-modified', 'modified_at');
-      }
-    });
-  }
-  return dbPromise;
+/**
+ * Get current ISO timestamp string
+ */
+function getNow(): string {
+	return new Date().toISOString();
 }
 
-class IndexedDBBackend implements DraftAPI {
-  async list(): Promise<DraftData[]> {
-    const db = await getDB();
-    const drafts = await db.getAll('drafts');
-    return drafts.sort(
-      (a, b) => new Date(b.modified_at).getTime() - new Date(a.modified_at).getTime()
-    );
-  }
+const webBackend: DraftAPI = {
+	async list(): Promise<DraftData[]> {
+		const db = await getDb();
+		const rows = await db
+			.select()
+			.from(drafts)
+			.where(isNull(drafts.deletedAt))
+			.orderBy(desc(drafts.modifiedAt));
+		return rows.map(toApiFormat);
+	},
 
-  async create(): Promise<DraftData> {
-    const db = await getDB();
-    const now = new Date().toISOString();
-    const draft: Omit<DraftData, 'id'> = {
-      content: '',
-      created_at: now,
-      modified_at: now
-    };
+	async create(): Promise<DraftData> {
+		const db = await getDb();
+		const now = getNow();
+		const result = await db
+			.insert(drafts)
+			.values({
+				uuid: generateUUID(),
+				content: '',
+				createdAt: now,
+				modifiedAt: now,
+				archived: false,
+				pinned: false,
+			})
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
 
-    const id = await db.add('drafts', draft as DraftData);
-    return { ...draft, id: id as number };
-  }
+	async get(uuid: string): Promise<DraftData | null> {
+		const db = await getDb();
+		const rows = await db.select().from(drafts).where(eq(drafts.uuid, uuid));
+		return rows.length > 0 ? toApiFormat(rows[0]) : null;
+	},
 
-  async get(id: number): Promise<DraftData | null> {
-    const db = await getDB();
-    const draft = await db.get('drafts', id);
-    return draft ?? null;
-  }
+	async save(uuid: string, content: string): Promise<DraftData> {
+		const db = await getDb();
+		const now = getNow();
+		const result = await db
+			.update(drafts)
+			.set({ content, modifiedAt: now })
+			.where(eq(drafts.uuid, uuid))
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
 
-  async save(id: number, content: string): Promise<DraftData> {
-    const db = await getDB();
-    const draft = await db.get('drafts', id);
+	async archive(uuid: string): Promise<DraftData> {
+		const db = await getDb();
+		const result = await db
+			.update(drafts)
+			.set({ archived: true })
+			.where(eq(drafts.uuid, uuid))
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
 
-    if (!draft) {
-      throw new Error(`Draft ${id} not found`);
-    }
+	async unarchive(uuid: string): Promise<DraftData> {
+		const db = await getDb();
+		const result = await db
+			.update(drafts)
+			.set({ archived: false })
+			.where(eq(drafts.uuid, uuid))
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
 
-    const updated: DraftData = {
-      ...draft,
-      content,
-      modified_at: new Date().toISOString()
-    };
+	async pin(uuid: string): Promise<DraftData> {
+		const db = await getDb();
 
-    await db.put('drafts', updated);
-    return updated;
-  }
+		// Unpin all other drafts first (single pin constraint)
+		await db.update(drafts).set({ pinned: false }).where(eq(drafts.pinned, true));
 
-  async delete(id: number): Promise<void> {
-    const db = await getDB();
-    await db.delete('drafts', id);
-  }
-}
+		// Pin the requested draft
+		const result = await db
+			.update(drafts)
+			.set({ pinned: true })
+			.where(eq(drafts.uuid, uuid))
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
 
-export default new IndexedDBBackend();
+	async unpin(uuid: string): Promise<DraftData> {
+		const db = await getDb();
+		const result = await db
+			.update(drafts)
+			.set({ pinned: false })
+			.where(eq(drafts.uuid, uuid))
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
+
+	async restore(uuid: string): Promise<DraftData> {
+		const db = await getDb();
+		const result = await db
+			.update(drafts)
+			.set({ deletedAt: null })
+			.where(eq(drafts.uuid, uuid))
+			.returning();
+		
+		triggerAutoSave();
+		return toApiFormat(result[0]);
+	},
+
+	async delete(uuid: string): Promise<void> {
+		const db = await getDb();
+		const now = getNow();
+		await db.update(drafts).set({ deletedAt: now }).where(eq(drafts.uuid, uuid));
+		triggerAutoSave();
+	},
+
+	async hardDelete(uuid: string): Promise<void> {
+		const db = await getDb();
+		await db.delete(drafts).where(eq(drafts.uuid, uuid));
+		triggerAutoSave();
+	},
+};
+
+export default webBackend;

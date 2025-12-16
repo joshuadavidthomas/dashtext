@@ -3,6 +3,7 @@
   import { createEditorContext } from '../editor';
   import { createDraftsState, type Draft } from '../../stores';
   import { getPlatform } from '../../platform';
+  import { setContext } from 'svelte';
   import * as Sidebar from '../ui/sidebar';
   import * as Tooltip from '../ui/tooltip';
   import DraftsSidebar from './DraftsSidebar.svelte';
@@ -27,8 +28,8 @@
   // Initialize editor context
   createEditorContext();
 
-  // Initialize drafts state with platform API adapter
-  const draftsState = createDraftsState(() => drafts, platform.draftsAPI);
+  // Initialize drafts state with direct API usage and platform for navigation
+  const draftsState = createDraftsState(() => drafts, platform.draftsAPI, platform);
 
   // Platform-agnostic focus refresh
   $effect(() => {

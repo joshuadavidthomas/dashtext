@@ -29,6 +29,7 @@
   }
 
   async function handleDelete() {
+    const draftsState = getDraftsState();
     await draftsState.deleteCurrentDraft();
   }
 

@@ -1,12 +1,12 @@
 import Database from '@tauri-apps/plugin-sql';
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
-import * as schema from './schema';
+import { drafts, type Draft, type NewDraft } from '@dashtext/lib/db';
 
-export * from './schema';
+export { drafts, type Draft, type NewDraft };
 
 const DB_URL = 'sqlite:dashtext.db';
 
-let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
+let db: ReturnType<typeof drizzle> | null = null;
 
 /**
  * Checks if the given SQL query returns rows (SELECT or RETURNING clause).
@@ -24,7 +24,7 @@ export async function getDb() {
 
   const sqlite = await Database.load(DB_URL);
 
-  db = drizzle<typeof schema>(
+  db = drizzle(
     async (sql, params, method) => {
       try {
         if (isSelectQuery(sql)) {
@@ -39,7 +39,7 @@ export async function getDb() {
         throw e;
       }
     },
-    { schema }
+    { schema: { drafts } }
   );
 
   return db;
