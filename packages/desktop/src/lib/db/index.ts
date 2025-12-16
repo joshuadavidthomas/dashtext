@@ -1,8 +1,8 @@
 import Database from '@tauri-apps/plugin-sql';
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
-import { drafts, type Draft, type NewDraft } from '@dashtext/lib/db';
+import { drafts, type Draft, type NewDraft, settings, type Settings, type NewSettings } from '@dashtext/lib/db';
 
-export { drafts, type Draft, type NewDraft };
+export { drafts, type Draft, type NewDraft, settings, type Settings, type NewSettings };
 
 const DB_URL = 'sqlite:dashtext.db';
 
@@ -39,7 +39,7 @@ export async function getDb() {
         throw e;
       }
     },
-    { schema: { drafts } }
+    { schema: { drafts, settings } }
   );
 
   return db;

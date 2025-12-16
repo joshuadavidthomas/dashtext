@@ -3,6 +3,24 @@
 	import { Button } from '@dashtext/lib/button';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { X } from '@lucide/svelte';
+
+	// Double-escape to close settings window
+	$effect(() => {
+		let lastEscape = 0;
+
+		function handleKeydown(event: KeyboardEvent) {
+			if (event.key === 'Escape') {
+				const now = Date.now();
+				if (now - lastEscape < 500) {
+					getCurrentWindow().close();
+				}
+				lastEscape = now;
+			}
+		}
+
+		document.addEventListener('keydown', handleKeydown);
+		return () => document.removeEventListener('keydown', handleKeydown);
+	});
 </script>
 
 <div class="flex flex-col h-screen bg-[var(--cm-background)]">

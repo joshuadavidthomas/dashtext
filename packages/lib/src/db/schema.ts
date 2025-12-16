@@ -19,3 +19,13 @@ export const drafts = sqliteTable('draft', {
 
 export type Draft = typeof drafts.$inferSelect;
 export type NewDraft = typeof drafts.$inferInsert;
+
+export const settings = sqliteTable('settings', {
+  id: integer('id').primaryKey().$default(() => 1),
+  captureShortcut: text('capture_shortcut'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export type Settings = typeof settings.$inferSelect;
+export type NewSettings = typeof settings.$inferInsert;

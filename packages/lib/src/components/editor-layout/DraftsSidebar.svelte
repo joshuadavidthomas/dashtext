@@ -25,7 +25,7 @@
       <div class="w-full truncate text-sm font-medium text-sidebar-foreground">
         {draft.title}
       </div>
-      {#each draft.previewLines as line, i (i)}
+      {#each draft.previewLines as line, i (`${draft.id}-${i}`)}
         <div class="w-full truncate text-xs text-sidebar-foreground/60">
           {line}
         </div>
