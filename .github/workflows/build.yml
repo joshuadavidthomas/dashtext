@@ -73,7 +73,7 @@ jobs:
           bun-version: latest
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -146,7 +146,7 @@ jobs:
           for f in *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
 
       - name: Upload deb
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bundle-deb
           path: |
@@ -154,7 +154,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/deb/*.sha256
 
       - name: Upload AppImage
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bundle-appimage
           path: |
@@ -162,7 +162,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/appimage/*.sha256
 
       - name: Upload rpm
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bundle-rpm
           path: |
@@ -170,7 +170,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/rpm/*.sha256
 
       - name: Upload tar.gz
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bundle-tar
           path: |
