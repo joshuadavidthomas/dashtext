@@ -32,6 +32,8 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vite-plugin-top-level-await": "catalog:",
+    "vite-plugin-wasm": "catalog:",
     "wrangler": "catalog:"
   }
 }

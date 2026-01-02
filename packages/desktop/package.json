@@ -38,6 +38,8 @@
     "svelte-check": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vite-plugin-top-level-await": "catalog:",
+    "vite-plugin-wasm": "catalog:"
   }
 }
