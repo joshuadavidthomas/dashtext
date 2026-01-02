@@ -42,5 +42,11 @@ fn get_migrations() -> Vec<Migration> {
             sql: include_str!("../../../lib/src/db/migrations/0002_add_settings_table.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "add_automerge_tables",
+            sql: include_str!("../../../lib/src/db/migrations/0003_add_automerge_tables.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
