@@ -92,10 +92,16 @@
     "./db/migrations": {
       "types": "./src/db/migrations/index.ts",
       "default": "./src/db/migrations/index.ts"
+    },
+    "./sync": {
+      "types": "./src/sync/index.ts",
+      "default": "./src/sync/index.ts"
     }
   },
   "files": ["src"],
   "dependencies": {
+    "@automerge/automerge": "^3.2.1",
+    "@automerge/automerge-repo": "^2.5.1",
     "@codemirror/commands": "catalog:",
     "@codemirror/lang-markdown": "catalog:",
     "@codemirror/language": "catalog:",
@@ -108,12 +114,12 @@
     "@tailwindcss/typography": "catalog:",
     "bits-ui": "catalog:",
     "clsx": "catalog:",
+    "drizzle-orm": "catalog:",
     "runed": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwind-variants": "catalog:",
     "tailwindcss": "catalog:",
-    "tw-animate-css": "catalog:",
-    "drizzle-orm": "catalog:"
+    "tw-animate-css": "catalog:"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
