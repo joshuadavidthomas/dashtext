@@ -4,8 +4,8 @@ import type { DraftData } from '@dashtext/lib';
 import type { PageLoadEvent } from './$types';
 
 export async function load({ params, parent }: PageLoadEvent) {
-	// No id - redirect to first draft or stay for new draft mode
-	if (!params.id) {
+	// No uuid - redirect to first draft or stay for new draft mode
+	if (!params.uuid) {
 		const { drafts: list } = await parent();
 		if (list.length > 0) {
 			// Redirect to most recent draft
@@ -16,12 +16,12 @@ export async function load({ params, parent }: PageLoadEvent) {
 	}
 
 	// "new" means new draft
-	if (params.id === 'new') {
+	if (params.uuid === 'new') {
 		return { draft: null };
 	}
 
 	// Fetch draft by UUID
-	const draft = await drafts.get(params.id);
+	const draft = await drafts.get(params.uuid);
 	
 	if (!draft) {
 		error(404, 'Draft not found');

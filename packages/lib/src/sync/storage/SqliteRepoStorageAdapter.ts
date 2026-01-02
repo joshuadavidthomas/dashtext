@@ -4,10 +4,14 @@
  * Works on both desktop (Tauri plugin-sql) and web (sql.js) via the
  * DbExecutor abstraction.
  *
- * Storage key format: [docId, chunkType, chunkId]
- * - docId: Automerge document ID
- * - chunkType: "snapshot" | "incremental"
- * - chunkId: Hash or identifier for the chunk
+ * Storage key formats:
+ * - Document chunks: [docId, chunkType, chunkId]
+ *   - docId: Automerge document ID
+ *   - chunkType: "snapshot" | "incremental"
+ *   - chunkId: Hash or identifier for the chunk
+ * - Special keys: [keyName] (single element)
+ *   - Stored as: doc_id = "__meta__", chunk_type = "meta", chunk_id = keyName
+ *   - Used by Automerge Repo for internal metadata (e.g., "storage-adapter-id")
  */
 
 import type { StorageAdapterInterface } from '@automerge/automerge-repo';
@@ -25,6 +29,16 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
    * Load a single chunk by its key.
    */
   async load(key: StorageKey): Promise<Uint8Array | undefined> {
+    // Handle special single-element keys (e.g., ["storage-adapter-id"])
+    if (key.length === 1) {
+      const rows = await this.db.select<ChunkRow>(
+        `SELECT bytes FROM automerge_chunk
+         WHERE doc_id = '__meta__' AND chunk_type = 'meta' AND chunk_id = ?`,
+        [key[0]]
+      );
+      return rows.length > 0 ? this.toUint8Array(rows[0].bytes) : undefined;
+    }
+
     const [docId, chunkType, chunkId] = key;
 
     if (!docId || !chunkType || !chunkId) {
@@ -49,13 +63,24 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
    * Save a chunk to storage.
    */
   async save(key: StorageKey, data: Uint8Array): Promise<void> {
+    const now = new Date().toISOString();
+
+    // Handle special single-element keys (e.g., ["storage-adapter-id"])
+    if (key.length === 1) {
+      await this.db.execute(
+        `INSERT OR REPLACE INTO automerge_chunk
+         (doc_id, chunk_type, chunk_id, bytes, created_at)
+         VALUES ('__meta__', 'meta', ?, ?, ?)`,
+        [key[0], data, now]
+      );
+      return;
+    }
+
     const [docId, chunkType, chunkId] = key;
 
     if (!docId || !chunkType || !chunkId) {
       throw new Error(`Invalid storage key: ${JSON.stringify(key)}`);
     }
-
-    const now = new Date().toISOString();
 
     // Use INSERT OR REPLACE to handle both insert and update
     await this.db.execute(
@@ -70,6 +95,16 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
    * Remove a single chunk by its key.
    */
   async remove(key: StorageKey): Promise<void> {
+    // Handle special single-element keys
+    if (key.length === 1) {
+      await this.db.execute(
+        `DELETE FROM automerge_chunk
+         WHERE doc_id = '__meta__' AND chunk_type = 'meta' AND chunk_id = ?`,
+        [key[0]]
+      );
+      return;
+    }
+
     const [docId, chunkType, chunkId] = key;
 
     if (!docId || !chunkType || !chunkId) {
@@ -87,12 +122,28 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
    * Load all chunks matching a key prefix.
    *
    * Key prefix examples:
+   * - [] - all chunks (expensive)
+   * - ["__meta__"] - all special metadata keys (returns as single-element keys)
    * - [docId] - all chunks for a document
    * - [docId, "snapshot"] - all snapshots for a document
    * - [docId, "incremental"] - all incremental changes for a document
    */
   async loadRange(keyPrefix: StorageKey): Promise<Chunk[]> {
     const [docId, chunkType] = keyPrefix;
+
+    // Special case: loading all metadata keys
+    if (docId === '__meta__') {
+      const rows = await this.db.select<ChunkRow>(
+        `SELECT doc_id, chunk_type, chunk_id, bytes FROM automerge_chunk
+         WHERE doc_id = '__meta__' AND chunk_type = 'meta'
+         ORDER BY chunk_id`
+      );
+      // Return as single-element keys
+      return rows.map((row) => ({
+        key: [row.chunk_id],
+        data: this.toUint8Array(row.bytes),
+      }));
+    }
 
     if (!docId) {
       // Empty prefix - return all chunks (expensive, avoid in practice)
@@ -128,6 +179,14 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
    */
   async removeRange(keyPrefix: StorageKey): Promise<void> {
     const [docId, chunkType] = keyPrefix;
+
+    // Special case: removing all metadata keys
+    if (docId === '__meta__') {
+      await this.db.execute(
+        `DELETE FROM automerge_chunk WHERE doc_id = '__meta__' AND chunk_type = 'meta'`
+      );
+      return;
+    }
 
     if (!docId) {
       // Empty prefix - remove all (dangerous, but valid)

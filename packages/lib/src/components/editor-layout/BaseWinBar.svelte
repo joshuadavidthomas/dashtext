@@ -22,8 +22,6 @@
   const draftsState = getDraftsState();
   const openSettingsWeb = getContext<(() => void) | undefined>('openSettings');
 
-  const currentDraftId = $derived(draftsState.currentDraft?.id ?? null);
-
   function handleNew() {
     goto('/drafts/new');
   }
@@ -109,7 +107,7 @@
             variant="toolbar"
             size="icon-sm"
             onclick={handleDelete}
-            disabled={!currentDraftId}
+            disabled={draftsState.currentDraft === null}
             aria-label="Delete draft"
           >
             <Trash2 class="size-3.5" />

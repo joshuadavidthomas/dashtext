@@ -16,16 +16,16 @@
       </div>
     </a>
   {/if}
-  {#each draftsState.drafts as draft (draft.id)}
+  {#each draftsState.drafts as draft (draft.uuid)}
     <a
-      href="/drafts/{draft.id}"
+      href="/drafts/{draft.uuid}"
       class="flex flex-col items-start gap-1 w-full px-3 py-2 transition-colors hover:bg-sidebar-accent"
-      class:bg-sidebar-accent={draftsState.currentDraft?.id === draft.id}
+      class:bg-sidebar-accent={draftsState.currentDraft?.uuid === draft.uuid}
     >
       <div class="w-full truncate text-sm font-medium text-sidebar-foreground">
         {draft.title}
       </div>
-      {#each draft.previewLines as line, i (`${draft.id}-${i}`)}
+      {#each draft.previewLines as line, i (`${draft.uuid}-${i}`)}
         <div class="w-full truncate text-xs text-sidebar-foreground/60">
           {line}
         </div>
