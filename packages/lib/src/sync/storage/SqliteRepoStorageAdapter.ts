@@ -162,7 +162,7 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
    * Ensure bytes are in Uint8Array format.
    *
    * Different platforms may return BLOB data in different formats:
-   * - Tauri plugin-sql: may return ArrayBuffer or Uint8Array
+   * - Tauri plugin-sql: may return JSON array strings like "[133,111,74,...]"
    * - sql.js: returns Uint8Array directly
    * - Some platforms may return base64 strings
    */
@@ -181,7 +181,11 @@ export class SqliteRepoStorageAdapter implements StorageAdapterInterface {
     }
 
     if (typeof data === 'string') {
-      // Assume base64 encoding
+      // Handle JSON array format (Tauri plugin-sql serializes blobs as "[133,111,74,...]")
+      if (data.startsWith('[') && data.endsWith(']')) {
+        return new Uint8Array(JSON.parse(data));
+      }
+      // Fall back to base64 encoding
       const binaryString = atob(data);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
