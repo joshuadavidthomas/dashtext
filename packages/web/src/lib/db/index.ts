@@ -3,6 +3,8 @@ import { drafts } from '@dashtext/lib/db';
 import { migrations } from '@dashtext/lib/db/migrations';
 import { getSqlJs, type Database } from './sqljs';
 import { loadDatabase, saveDatabase, createAutoSave } from './persist';
+import type { DbExecutor } from '@dashtext/lib/sync';
+import { getSyncEngine, initializeSyncEngine, migrateExistingDrafts } from '@dashtext/lib/sync';
 
 type DrizzleDB = ReturnType<typeof drizzle>;
 
@@ -99,7 +101,51 @@ export async function getDb(): Promise<DrizzleDB> {
 		});
 	}
 
+	// Initialize SyncEngine after DB is ready
+	const dbExecutor = new SqlJsDbExecutor(sqlite);
+	const syncEngine = await initializeSyncEngine(dbExecutor);
+	await migrateExistingDrafts(syncEngine, dbExecutor);
+
 	return db;
+}
+
+/**
+ * sql.js-based DbExecutor implementation.
+ */
+class SqlJsDbExecutor implements DbExecutor {
+	constructor(private sqlite: Database) {}
+
+	async select<T>(sql: string, params?: unknown[]): Promise<T[]> {
+		const results = this.sqlite.exec(sql, params as any);
+		if (!results || results.length === 0) return [];
+
+		const queryResult = results[0];
+		const columns = queryResult.columns;
+		const values = queryResult.values;
+
+		return values.map((row) => {
+			const obj: Record<string, unknown> = {};
+			columns.forEach((col: string, i: number) => {
+				obj[col] = row[i];
+			});
+			return obj as T;
+		});
+	}
+
+	async execute(sql: string, params?: unknown[]): Promise<void> {
+		this.sqlite.exec(sql, params as any);
+	}
+}
+
+/**
+ * Get the SyncEngine instance.
+ * Must call getDb() first to initialize the database.
+ */
+export function getSyncEngineInstance() {
+	if (!sqlite) {
+		throw new Error('Database not initialized. Call getDb() first.');
+	}
+	return getSyncEngine(new SqlJsDbExecutor(sqlite));
 }
 
 /**
