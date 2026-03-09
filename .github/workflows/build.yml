@@ -81,7 +81,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install Rust stable
-        uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # v1
+        uses: actions-rust-lang/setup-rust-toolchain@a0b538fa0b742a6aa35d6e2c169b4bd06d225a98 # v1
         with:
           cache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
@@ -146,7 +146,7 @@ jobs:
           for f in *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
 
       - name: Upload deb
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-deb
           path: |
@@ -154,7 +154,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/deb/*.sha256
 
       - name: Upload AppImage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-appimage
           path: |
@@ -162,7 +162,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/appimage/*.sha256
 
       - name: Upload rpm
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-rpm
           path: |
@@ -170,7 +170,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/rpm/*.sha256
 
       - name: Upload tar.gz
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-tar
           path: |
