@@ -61,8 +61,8 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@types/sql.js": "^1.4.9",
+    "@types/sql.js": "^1.4.10",
     "drizzle-orm": "^0.45.1",
-    "sql.js": "^1.13.0"
+    "sql.js": "^1.14.1"
   }
 }

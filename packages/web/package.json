@@ -17,12 +17,12 @@
     "@dashtext/lib": "workspace:*",
     "drizzle-orm": "catalog:",
     "idb": "^8.0.3",
-    "sql.js": "^1.13.0"
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "@lucide/svelte": "catalog:",
     "@types/node": "catalog:",
-    "@types/sql.js": "^1.4.9",
+    "@types/sql.js": "^1.4.10",
     "@sveltejs/adapter-cloudflare": "catalog:",
     "@sveltejs/kit": "catalog:",
     "@sveltejs/vite-plugin-svelte": "catalog:",
