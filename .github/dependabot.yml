@@ -14,7 +14,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: cargo
-    directory: "/src-tauri"
+    directory: "/packages/desktop/src-tauri"
     schedule:
       interval: weekly
       timezone: America/Chicago
