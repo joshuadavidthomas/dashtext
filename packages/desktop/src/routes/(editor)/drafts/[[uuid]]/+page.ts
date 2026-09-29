@@ -22,7 +22,7 @@ export async function load({ params, parent }: PageLoadEvent) {
 
 	// Fetch draft by UUID
 	const draft = await drafts.get(params.uuid);
-	
+
 	if (!draft) {
 		error(404, 'Draft not found');
 	}

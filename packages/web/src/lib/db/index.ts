@@ -18,7 +18,7 @@ let autoSave: (() => void) | null = null;
 function runMigrations(sqliteDb: Database): void {
 	// Check if migrations table exists
 	const hasMigrationsTable = sqliteDb.exec(`
-		SELECT name FROM sqlite_master 
+		SELECT name FROM sqlite_master
 		WHERE type='table' AND name='__drizzle_migrations'
 	`);
 
@@ -38,7 +38,7 @@ function runMigrations(sqliteDb: Database): void {
 		'SELECT hash FROM __drizzle_migrations ORDER BY id'
 	);
 	const appliedHashes = new Set(
-		appliedMigrations.length > 0 
+		appliedMigrations.length > 0
 			? appliedMigrations[0].values.map((row) => row[0] as string)
 			: []
 	);
@@ -47,7 +47,7 @@ function runMigrations(sqliteDb: Database): void {
 	for (const migration of migrations) {
 		if (!appliedHashes.has(migration.hash)) {
 			console.log(`[Migrations] Applying migration ${migration.hash}`);
-			
+
 			// Run each SQL statement
 			for (const statement of migration.sql) {
 				if (statement.trim()) {

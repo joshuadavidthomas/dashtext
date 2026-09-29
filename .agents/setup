@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb for this repository. Amp runs this from the repo root
+# and snapshots the result, so everything here must remain idempotent.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+echo "==> Checking native desktop dependencies"
+packages=(
+    build-essential ca-certificates clang cmake glslc
+    libasound2-dev libayatana-appindicator3-dev libfontconfig-dev libgtk-3-dev
+    librsvg2-dev libsoup-3.0-dev libvulkan-dev libvulkan1 libwayland-dev
+    libwebkit2gtk-4.1-dev libx11-xcb-dev libxkbcommon-dev
+    libxkbcommon-x11-dev patchelf pkg-config
+)
+missing=()
+for package in "${packages[@]}"; do
+    if [[ $(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true) != "install ok installed" ]]; then
+        missing+=("$package")
+    fi
+done
+if ((${#missing[@]})); then
+    sudo apt-get update -qq
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"
+fi
+
+if ! command -v mise >/dev/null 2>&1; then
+    echo "==> Installing mise"
+    mkdir -p "$HOME/.local/bin"
+    curl --proto '=https' --tlsv1.2 -LsSf https://mise.run | MISE_INSTALL_PATH="$HOME/.local/bin/mise" sh
+fi
+
+echo "==> Installing pinned development tools"
+mise trust "$repo_root/mise.toml"
+mise install
+mise -C tools/rustfmt install rust
+
+# rustup updates this file during installation; load it for the remainder of
+# this non-interactive setup process without modifying shell profiles.
+# shellcheck source=/dev/null
+source "$HOME/.cargo/env"
+
+# Orb login shells prefer ~/.local/bin, and Cargo searches CARGO_HOME/bin for
+# subcommands. Keep project-selected tools authoritative in both locations.
+cargo_home="${CARGO_HOME:-$HOME/.cargo}"
+mkdir -p "$HOME/.local/bin" "$cargo_home/bin"
+for tool in cargo-hawk just prek zizmor; do
+    ln -sfn "$(mise which "$tool")" "$HOME/.local/bin/$tool"
+done
+ln -sfn "$(mise which cargo-hawk)" "$cargo_home/bin/cargo-hawk"
+
+echo "==> Installing frontend dependencies"
+bun install --frozen-lockfile
+
+echo "==> Fetching locked Cargo dependencies for this orb's target"
+host=$(rustc -vV | sed -n 's/^host: //p')
+cargo fetch --manifest-path packages/desktop/src-tauri/Cargo.toml --locked --target "$host"
+
+echo "==> Installing pre-commit hooks and their environments"
+prek install --prepare-hooks
+
+echo "==> Ready"

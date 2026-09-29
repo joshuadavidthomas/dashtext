@@ -1,7 +1,10 @@
-use crate::hotkey::{create_manager, HotkeyManager};
 use std::sync::Arc;
+
 use tauri::AppHandle;
 use tokio::sync::Mutex;
+
+use crate::hotkey::HotkeyManager;
+use crate::hotkey::create_manager;
 
 /// Application settings state
 /// Manages active hotkey registration (database persistence handled by frontend)
@@ -35,7 +38,7 @@ impl SettingsState {
         let mgr = create_manager(self.app.clone(), shortcut)?;
         mgr.register()?;
         *self.hotkey_manager.lock().await = Some(mgr);
-        
+
         tracing::info!("Registered capture shortcut: {}", shortcut);
         Ok(())
     }

@@ -82,7 +82,7 @@ export class DraftsState {
   // Internal navigation handling - delegates to platform when available
   private async handleNavigation(navInfo: {replaceUrl?: string, newDraftUuid?: string} | {navigateTo?: string}) {
     if (!this.platform) return;
-    
+
     if ('replaceUrl' in navInfo && navInfo.replaceUrl) {
       this.platform.replaceUrl(navInfo.replaceUrl);
     }
@@ -134,7 +134,7 @@ export class DraftsState {
       this.currentDraft = newDraft;
 
       this.pendingContent = null;
-      
+
       // Handle navigation internally
       await this.handleNavigation({ replaceUrl: `/drafts/${newDraft.uuid}`, newDraftUuid: newDraft.uuid });
     } else if (this.currentDraft !== null) {
@@ -165,10 +165,10 @@ this.pendingContent = null;
 
   async archiveCurrentDraft(): Promise<void> {
 if (!this.currentDraft) return;
-    
+
     const updated = await this.api.archive(this.currentDraft.uuid);
     this.currentDraft.archived = updated.archived || false;
-    
+
     // Handle navigation internally if archived
     if (updated.archived) {
       const remainingDrafts = this.drafts.filter(d => d.uuid !== this.currentDraft!.uuid && !d.archived);
@@ -182,14 +182,14 @@ if (!this.currentDraft) return;
 
   async togglePinCurrentDraft() {
     if (!this.currentDraft) return;
-    
+
     if (this.currentDraft.pinned) {
       const updated = await this.api.unpin(this.currentDraft.uuid);
       this.currentDraft.pinned = updated.pinned || false;
     } else {
       const updated = await this.api.pin(this.currentDraft.uuid);
       this.currentDraft.pinned = updated.pinned || false;
-      
+
       // Update pinned status on other drafts (single pin constraint)
       this.drafts.forEach(d => {
         if (d.uuid !== this.currentDraft!.uuid && d.pinned) {

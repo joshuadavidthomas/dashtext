@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 /// Platform-agnostic shortcut specification parsed from a string like "CommandOrControl+Shift+C"
 #[derive(Debug, Clone)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ShortcutSpec {
     pub key: String,
     pub ctrl_or_cmd: bool,
@@ -15,13 +16,15 @@ impl FromStr for ShortcutSpec {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.split('+').map(str::trim).collect();
-
-        if parts.is_empty() {
+        let Some((key, modifiers)) = parts.split_last() else {
             return Err("Empty shortcut string".into());
+        };
+        if key.is_empty() {
+            return Err("Shortcut key cannot be empty".into());
         }
 
         let mut spec = Self {
-            key: parts.last().unwrap().to_string(),
+            key: (*key).to_string(),
             ctrl_or_cmd: false,
             meta: false,
             shift: false,
@@ -29,14 +32,15 @@ impl FromStr for ShortcutSpec {
         };
 
         // Parse modifiers (all parts except the last)
-        for part in &parts[..parts.len() - 1] {
+        for part in modifiers {
             match *part {
-                "CommandOrControl" | "CmdOrCtrl" => spec.ctrl_or_cmd = true,
-                "Control" | "Ctrl" => spec.ctrl_or_cmd = true,
+                "CommandOrControl" | "CmdOrCtrl" | "Control" | "Ctrl" => {
+                    spec.ctrl_or_cmd = true;
+                }
                 "Command" | "Cmd" | "Super" => spec.meta = true,
                 "Shift" => spec.shift = true,
                 "Alt" | "Option" => spec.alt = true,
-                _ => return Err(format!("Unknown modifier: {}", part)),
+                _ => return Err(format!("Unknown modifier: {part}")),
             }
         }
 
@@ -47,9 +51,7 @@ impl FromStr for ShortcutSpec {
 #[cfg(target_os = "linux")]
 impl ShortcutSpec {
     /// Convert to evdev Key and modifiers
-    pub fn to_evdev(
-        &self,
-    ) -> Result<(evdev::Key, std::collections::HashSet<evdev::Key>), String> {
+    pub fn to_evdev(&self) -> Result<(evdev::Key, std::collections::HashSet<evdev::Key>), String> {
         use evdev::Key;
 
         // Normalize key name to evdev format (KEY_*)
@@ -61,7 +63,7 @@ impl ShortcutSpec {
         };
 
         let key = Key::from_str(&key_name)
-            .map_err(|_| format!("Unsupported key: {}", self.key))?;
+            .map_err(|error| format!("Unsupported key {}: {error:?}", self.key))?;
 
         // Build modifier set
         let mut mods = std::collections::HashSet::new();
@@ -94,21 +96,23 @@ impl ShortcutSpec {
 impl ShortcutSpec {
     /// Convert to Tauri's Shortcut type
     pub fn to_tauri(&self) -> Result<tauri_plugin_global_shortcut::Shortcut, String> {
-        use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+        use tauri_plugin_global_shortcut::Code;
+        use tauri_plugin_global_shortcut::Modifiers;
+        use tauri_plugin_global_shortcut::Shortcut;
 
         // Normalize key name to Code format (KeyA, Digit1, Space, etc.)
         let code_name = match self.key.as_str() {
-            s if s.len() == 1 && s.chars().next().unwrap().is_ascii_alphabetic() => {
+            s if s.as_bytes().first().is_some_and(u8::is_ascii_alphabetic) && s.len() == 1 => {
                 format!("Key{}", s.to_uppercase())
             }
-            s if s.len() == 1 && s.chars().next().unwrap().is_ascii_digit() => {
-                format!("Digit{}", s)
+            s if s.as_bytes().first().is_some_and(u8::is_ascii_digit) && s.len() == 1 => {
+                format!("Digit{s}")
             }
             s => s.to_string(),
         };
 
         let code = Code::from_str(&code_name)
-            .map_err(|e| format!("Unsupported key: {} ({:?})", self.key, e))?;
+            .map_err(|error| format!("Unsupported key {} ({error:?})", self.key))?;
 
         // Build modifiers
         let mut mods = Modifiers::empty();

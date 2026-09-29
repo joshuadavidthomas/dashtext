@@ -10,11 +10,11 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
 export default defineConfig(async () => ({
   plugins: [topLevelAwait(), wasm(), tailwindcss(), sveltekit()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  
+
   optimizeDeps: {
     exclude: ["@automerge/automerge-wasm"],
   },
-  
+
   server: {
     fs: {
       allow: ["../.."]

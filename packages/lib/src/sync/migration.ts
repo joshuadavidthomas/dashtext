@@ -13,35 +13,35 @@ interface LegacyDraftRow {
 
 /**
  * Check if migration from legacy draft table is needed.
- * 
+ *
  * Returns true if:
  * - automerge_doc_map table is empty (not yet migrated)
  * - AND draft table has rows (there are legacy drafts to migrate)
- * 
+ *
  * This is idempotent - returns false after first successful migration.
  */
 export async function needsMigration(db: DbExecutor): Promise<boolean> {
   const rows = await db.select<{ count: number }>(
     `SELECT COUNT(*) as count FROM automerge_doc_map`
   );
-  
+
   if (rows[0].count > 0) {
     return false;
   }
-  
+
   const draftRows = await db.select<{ count: number }>(
     `SELECT COUNT(*) as count FROM draft`
   );
-  
+
   return draftRows[0].count > 0;
 }
 
 /**
  * Migrate existing drafts from legacy draft table to Automerge.
- * 
+ *
  * This function is idempotent - safe to call multiple times.
  * It will skip migration if Automerge documents already exist.
- * 
+ *
  * Migration steps:
  * 1. Check if migration is needed
  * 2. Load all existing drafts from draft table
@@ -71,9 +71,9 @@ export async function migrateExistingDrafts(
 
   const pinnedDrafts = legacyDrafts.filter((d) => d.pinned);
   let pinnedUuid: string | null = null;
-  
+
   if (pinnedDrafts.length > 1) {
-    const mostRecent = pinnedDrafts.reduce((latest, current) => 
+    const mostRecent = pinnedDrafts.reduce((latest, current) =>
       current.modified_at > latest.modified_at ? current : latest
     );
     pinnedUuid = mostRecent.uuid;
@@ -100,9 +100,9 @@ async function migrateSingleDraft(
   console.log(`[Migration] Migrating draft: ${legacy.uuid}`);
 
   const result = await syncEngine.createDraft();
-  
+
   await syncEngine.setDraftContent(result.uuid, legacy.content);
-  
+
   await syncEngine.updateDraftMetadata(result.uuid, {
     archived: legacy.archived,
     pinned: legacy.pinned && legacy.uuid === pinnedUuid,

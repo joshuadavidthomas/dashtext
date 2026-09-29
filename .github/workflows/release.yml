@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/workflows/build.yml
+    uses: $/.github/workflows/build.yml
     permissions:
       attestations: write
       contents: read
@@ -34,11 +34,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
 
       - name: Generate latest.json for updater
         env:
@@ -49,13 +49,13 @@ jobs:
           TARBALL=$(ls bundle-tar/*.tar.gz | head -1)
           TARBALL_NAME=$(basename "$TARBALL")
           SHA256=$(sha256sum "$TARBALL" | cut -d' ' -f1)
-          
+
           # Read the minisign signature (just the base64 line, not the comment)
           SIGNATURE=$(tail -1 "${TARBALL}.minisig")
-          
+
           # Get release notes from GitHub
           NOTES=$(gh release view "$TAG_NAME" --json body -q .body || echo "")
-          
+
           # Generate latest.json
           cat > latest.json << EOF
           {
@@ -88,4 +88,3 @@ jobs:
             bundle-tar/*.tar.gz \
             bundle-tar/*.tar.gz.minisig \
             bundle-tar/*.sha256
-

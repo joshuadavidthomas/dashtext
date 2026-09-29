@@ -1,12 +1,19 @@
-use super::{shortcut::ShortcutSpec, HotkeyManager};
-use evdev::{Device, InputEventKind, Key};
 use std::collections::HashSet;
 use std::os::unix::io::AsRawFd;
 use std::path::PathBuf;
 use std::process::Command;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+
+use evdev::Device;
+use evdev::InputEventKind;
+use evdev::Key;
 use tauri::Emitter;
+
+use super::HotkeyManager;
+use super::shortcut::ShortcutSpec;
 
 pub struct EvdevHotkeyManager {
     app: tauri::AppHandle,
@@ -31,7 +38,7 @@ impl EvdevHotkeyManager {
             }
             Err(e) => {
                 tracing::warn!("Failed to check input group: {}", e);
-                return Err(format!("Failed to check permissions: {}", e));
+                return Err(format!("Failed to check permissions: {e}"));
             }
         }
 
@@ -65,19 +72,23 @@ impl HotkeyManager for EvdevHotkeyManager {
 
         // Reset stop flag
         self.stop_flag.store(false, Ordering::SeqCst);
-        
-        let stop_flag = self.stop_flag.clone();
+
+        let stop_flag = Arc::clone(&self.stop_flag);
         let app = self.app.clone();
         let target_key = self.target_key;
         let required_modifiers = self.required_modifiers.clone();
 
         // Spawn the listener thread
         let listener_handle = std::thread::spawn(move || {
-            evdev_listener_loop(devices, app, stop_flag, target_key, required_modifiers);
+            evdev_listener_loop(&devices, &app, &stop_flag, target_key, &required_modifiers);
         });
 
         // Store the listener handle
-        *self.listener.lock().unwrap() = Some(listener_handle);
+        *self
+            .listener
+            .lock()
+            .map_err(|error| format!("Hotkey listener lock poisoned: {error}"))? =
+            Some(listener_handle);
 
         self.registered.store(true, Ordering::SeqCst);
         tracing::info!("Registered global hotkey via evdev");
@@ -93,12 +104,18 @@ impl HotkeyManager for EvdevHotkeyManager {
         self.stop_flag.store(true, Ordering::SeqCst);
 
         // Wait for the thread to finish (with timeout)
-        if let Some(handle) = self.listener.lock().unwrap().take() {
+        let handle = self
+            .listener
+            .lock()
+            .map_err(|error| format!("Hotkey listener lock poisoned: {error}"))?
+            .take();
+        if let Some(handle) = handle {
             // Give the thread some time to notice the stop flag and exit
             std::thread::sleep(std::time::Duration::from_millis(100));
-            
-            // Try to join, but don't block forever
-            let _ = handle.join();
+
+            handle
+                .join()
+                .map_err(|_panic| "Hotkey listener thread panicked".to_string())?;
         }
 
         self.registered.store(false, Ordering::SeqCst);
@@ -111,19 +128,18 @@ impl HotkeyManager for EvdevHotkeyManager {
 fn find_keyboard_devices() -> Result<Vec<PathBuf>, String> {
     let mut keyboards = Vec::new();
 
-    let input_dir = std::fs::read_dir("/dev/input")
-        .map_err(|e| format!("Failed to read /dev/input: {}", e))?;
+    let input_dir =
+        std::fs::read_dir("/dev/input").map_err(|e| format!("Failed to read /dev/input: {e}"))?;
 
     for entry in input_dir {
-        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+        let entry = entry.map_err(|e| format!("Failed to read directory entry: {e}"))?;
         let path = entry.path();
 
         // Only look at event* devices
         let is_event_device = path
             .file_name()
             .and_then(|n| n.to_str())
-            .map(|n| n.starts_with("event"))
-            .unwrap_or(false);
+            .is_some_and(|n| n.starts_with("event"));
 
         if !is_event_device {
             continue;
@@ -133,15 +149,12 @@ fn find_keyboard_devices() -> Result<Vec<PathBuf>, String> {
         match Device::open(&path) {
             Ok(device) => {
                 // Check if device has keyboard capabilities
-                let has_keys = device
-                    .supported_keys()
-                    .map(|keys| {
-                        // A keyboard should have at least some letter keys
-                        keys.contains(Key::KEY_A)
-                            && keys.contains(Key::KEY_Z)
-                            && keys.contains(Key::KEY_ENTER)
-                    })
-                    .unwrap_or(false);
+                let has_keys = device.supported_keys().is_some_and(|keys| {
+                    // A keyboard should have at least some letter keys
+                    keys.contains(Key::KEY_A)
+                        && keys.contains(Key::KEY_Z)
+                        && keys.contains(Key::KEY_ENTER)
+                });
 
                 if has_keys {
                     tracing::debug!(
@@ -169,12 +182,13 @@ fn find_keyboard_devices() -> Result<Vec<PathBuf>, String> {
 }
 
 /// Main listener loop running in a blocking thread
+#[allow(clippy::too_many_lines)]
 fn evdev_listener_loop(
-    device_paths: Vec<PathBuf>,
-    app: tauri::AppHandle,
-    stop_flag: Arc<AtomicBool>,
+    device_paths: &[PathBuf],
+    app: &tauri::AppHandle,
+    stop_flag: &AtomicBool,
     target_key: Key,
-    modifier_keys: HashSet<Key>,
+    modifier_keys: &HashSet<Key>,
 ) {
     // Open all keyboard devices in non-blocking mode
     let mut devices: Vec<Device> = device_paths
@@ -182,13 +196,7 @@ fn evdev_listener_loop(
         .filter_map(|path| match Device::open(path) {
             Ok(device) => {
                 // Set device to non-blocking mode so fetch_events doesn't block
-                let fd = device.as_raw_fd();
-                unsafe {
-                    let flags = libc::fcntl(fd, libc::F_GETFL);
-                    if flags != -1 {
-                        libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK);
-                    }
-                }
+                set_nonblocking(&device);
                 tracing::debug!("Opened device (non-blocking): {:?}", path);
                 Some(device)
             }
@@ -265,20 +273,19 @@ fn evdev_listener_loop(
                             }
 
                             // Check if all required modifier groups are satisfied
-                            let needs_ctrl = modifier_keys.contains(&Key::KEY_LEFTCTRL) 
+                            let needs_ctrl = modifier_keys.contains(&Key::KEY_LEFTCTRL)
                                 || modifier_keys.contains(&Key::KEY_RIGHTCTRL);
-                            let needs_shift = modifier_keys.contains(&Key::KEY_LEFTSHIFT) 
+                            let needs_shift = modifier_keys.contains(&Key::KEY_LEFTSHIFT)
                                 || modifier_keys.contains(&Key::KEY_RIGHTSHIFT);
-                            let needs_alt = modifier_keys.contains(&Key::KEY_LEFTALT) 
+                            let needs_alt = modifier_keys.contains(&Key::KEY_LEFTALT)
                                 || modifier_keys.contains(&Key::KEY_RIGHTALT);
-                            let needs_meta = modifier_keys.contains(&Key::KEY_LEFTMETA) 
+                            let needs_meta = modifier_keys.contains(&Key::KEY_LEFTMETA)
                                 || modifier_keys.contains(&Key::KEY_RIGHTMETA);
 
-                            let modifiers_satisfied = 
-                                (!needs_ctrl || has_ctrl) &&
-                                (!needs_shift || has_shift) &&
-                                (!needs_alt || has_alt) &&
-                                (!needs_meta || has_meta);
+                            let modifiers_satisfied = (!needs_ctrl || has_ctrl)
+                                && (!needs_shift || has_shift)
+                                && (!needs_alt || has_alt)
+                                && (!needs_meta || has_meta);
 
                             if modifiers_satisfied {
                                 match value {
@@ -286,15 +293,14 @@ fn evdev_listener_loop(
                                         // Key press (not repeat)
                                         is_pressed = true;
                                         tracing::info!("Quick capture hotkey triggered (evdev)");
-                                        let _ = app.emit("hotkey:capture", ());
+                                        if let Err(error) = app.emit("hotkey:capture", ()) {
+                                            tracing::warn!("Failed to emit capture event: {error}");
+                                        }
                                     }
                                     0 if is_pressed => {
                                         // Key release
                                         is_pressed = false;
                                         tracing::debug!("Quick capture hotkey released (evdev)");
-                                    }
-                                    2 => {
-                                        // Key repeat - ignore
                                     }
                                     _ => {}
                                 }
@@ -313,11 +319,26 @@ fn evdev_listener_loop(
     }
 }
 
+fn set_nonblocking(device: &Device) {
+    let fd = device.as_raw_fd();
+    // SAFETY: `fd` is borrowed from the live device and `F_GETFL` does not
+    // mutate memory or outlive that descriptor.
+    let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+    if flags != -1 {
+        // SAFETY: `fd` remains valid for this call, and `flags | O_NONBLOCK` is
+        // a valid `F_SETFL` argument derived from the descriptor's own flags.
+        let result = unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) };
+        if result == -1 {
+            tracing::warn!("Failed to set keyboard device to non-blocking mode");
+        }
+    }
+}
+
 /// Check if the current user is in the 'input' group
 fn check_input_group() -> Result<bool, String> {
     let output = Command::new("groups")
         .output()
-        .map_err(|e| format!("Failed to execute 'groups' command: {}", e))?;
+        .map_err(|e| format!("Failed to execute 'groups' command: {e}"))?;
 
     if !output.status.success() {
         return Err("'groups' command failed".to_string());
@@ -331,7 +352,7 @@ fn check_input_group() -> Result<bool, String> {
 fn get_username() -> Result<String, String> {
     let output = Command::new("whoami")
         .output()
-        .map_err(|e| format!("Failed to execute 'whoami' command: {}", e))?;
+        .map_err(|e| format!("Failed to execute 'whoami' command: {e}"))?;
 
     if !output.status.success() {
         return Err("'whoami' command failed".to_string());
@@ -343,11 +364,10 @@ fn get_username() -> Result<String, String> {
 /// Get a helpful error message for missing input group permissions
 fn get_permission_error_message() -> String {
     let username = get_username().unwrap_or_else(|_| "your_username".to_string());
-    
+
     format!(
         "evdev requires input group permissions. Please run:\n\
-         sudo usermod -aG input {}\n\
-         Then log out and log back in for changes to take effect.",
-        username
+         sudo usermod -aG input {username}\n\
+         Then log out and log back in for changes to take effect."
     )
 }

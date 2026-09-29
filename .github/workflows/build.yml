@@ -49,7 +49,7 @@ jobs:
     # Only signed builds use the 'release' environment (and its secrets)
     environment: ${{ inputs.sign && 'release' || '' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -73,7 +73,7 @@ jobs:
           bun-version: latest
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -146,7 +146,7 @@ jobs:
           for f in *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
 
       - name: Upload deb
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: bundle-deb
           path: |
@@ -154,7 +154,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/deb/*.sha256
 
       - name: Upload AppImage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: bundle-appimage
           path: |
@@ -162,7 +162,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/appimage/*.sha256
 
       - name: Upload rpm
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: bundle-rpm
           path: |
@@ -170,7 +170,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/rpm/*.sha256
 
       - name: Upload tar.gz
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: bundle-tar
           path: |

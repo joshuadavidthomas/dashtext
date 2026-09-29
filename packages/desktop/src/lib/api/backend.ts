@@ -87,12 +87,12 @@ const tauriBackend: DraftAPI = {
 
   async pin(uuid: string): Promise<DraftData> {
     const db = await getDb();
-    
+
     // Unpin all other drafts first (single pin constraint)
     await db.update(drafts)
       .set({ pinned: false })
       .where(eq(drafts.pinned, true));
-    
+
     // Pin the requested draft
     const result = await db.update(drafts)
       .set({ pinned: true })

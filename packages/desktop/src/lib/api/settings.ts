@@ -17,7 +17,7 @@ function getNow(): string {
  */
 export async function loadSettings(): Promise<AppSettings> {
   const db = await getDb();
-  
+
   const rows = await db
     .select()
     .from(settings)

@@ -8,8 +8,11 @@
 //!
 //! Migrations are stored in @dashtext/lib and shared between desktop and web.
 
-use tauri::{plugin::TauriPlugin, Runtime};
-use tauri_plugin_sql::{Migration, MigrationKind, PluginConfig};
+use tauri::Runtime;
+use tauri::plugin::TauriPlugin;
+use tauri_plugin_sql::Migration;
+use tauri_plugin_sql::MigrationKind;
+use tauri_plugin_sql::PluginConfig;
 
 /// Database connection URL
 pub const DB_URL: &str = "sqlite:dashtext.db";

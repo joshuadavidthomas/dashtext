@@ -12,11 +12,11 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [topLevelAwait(), wasm(), tailwindcss(), sveltekit()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  
+
   optimizeDeps: {
     exclude: ["@automerge/automerge-wasm"],
   },
-  
+
   clearScreen: false,
   server: {
     port: 1420,

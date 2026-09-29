@@ -1,3 +1,7 @@
+// `tauri::command` expands to dispatch code containing an unreachable branch
+// and an intentionally ignored must-use marker outside this crate's control.
+#![allow(clippy::let_underscore_must_use, clippy::unreachable)]
+
 mod conf;
 mod db;
 mod hotkey;
@@ -23,6 +27,12 @@ async fn unregister_capture_shortcut(
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Run the desktop application.
+///
+/// # Panics
+///
+/// Panics if Tauri cannot initialize or run the application.
+#[allow(clippy::expect_used)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())

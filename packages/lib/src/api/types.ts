@@ -28,5 +28,3 @@ export interface DraftAPI {
   delete(uuid: string): Promise<void>;
   hardDelete(uuid: string): Promise<void>;
 }
-
-

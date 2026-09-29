@@ -12,7 +12,7 @@
 
 	const platform = getPlatform();
 	const isMac = $derived(platform.platform === 'desktop' && typeof navigator !== 'undefined' && navigator.platform.includes('Mac'));
-	
+
 	const DEFAULT_SHORTCUT = 'CommandOrControl+Shift+C';
 
 	let mode = $state<'idle' | 'recording'>('idle');
@@ -23,7 +23,7 @@
 	// Parse shortcut string into display keys
 	function parseShortcut(shortcut: string): string[] {
 		if (!shortcut) return [];
-		
+
 		return shortcut.split('+').map((key) => {
 			if (key === 'CommandOrControl') return isMac ? '⌘' : 'Ctrl';
 			if (key === 'Alt') return isMac ? '⌥' : 'Alt';
@@ -97,7 +97,7 @@
 		mode = 'idle';
 		previewKeys = [];
 		setTimeout(() => (showSuccess = false), 1000);
-		
+
 		// Return focus to the button
 		inputRef?.focus();
 	}

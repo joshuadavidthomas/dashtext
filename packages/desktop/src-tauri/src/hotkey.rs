@@ -1,6 +1,6 @@
-mod global;
 #[cfg(target_os = "linux")]
 mod evdev;
+mod global;
 mod shortcut;
 
 use std::sync::Arc;
@@ -14,7 +14,7 @@ pub trait HotkeyManager: Send + Sync {
     fn unregister(&self) -> Result<(), String>;
 }
 
-/// Create the appropriate HotkeyManager for the current platform
+/// Create the appropriate `HotkeyManager` for the current platform
 pub fn create_manager(
     app: tauri::AppHandle,
     shortcut: &str,

@@ -15,7 +15,7 @@
 
 <EditorLayout drafts={data.drafts}>
   {@render children()}
-  
+
   {#snippet afterLayout()}
     <SettingsDialog bind:open={settingsOpen} />
   {/snippet}

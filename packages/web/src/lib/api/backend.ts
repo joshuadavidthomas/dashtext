@@ -51,7 +51,7 @@ const webBackend: DraftAPI = {
 				pinned: false,
 			})
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},
@@ -70,7 +70,7 @@ const webBackend: DraftAPI = {
 			.set({ content, modifiedAt: now })
 			.where(eq(drafts.uuid, uuid))
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},
@@ -82,7 +82,7 @@ const webBackend: DraftAPI = {
 			.set({ archived: true })
 			.where(eq(drafts.uuid, uuid))
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},
@@ -94,7 +94,7 @@ const webBackend: DraftAPI = {
 			.set({ archived: false })
 			.where(eq(drafts.uuid, uuid))
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},
@@ -111,7 +111,7 @@ const webBackend: DraftAPI = {
 			.set({ pinned: true })
 			.where(eq(drafts.uuid, uuid))
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},
@@ -123,7 +123,7 @@ const webBackend: DraftAPI = {
 			.set({ pinned: false })
 			.where(eq(drafts.uuid, uuid))
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},
@@ -135,7 +135,7 @@ const webBackend: DraftAPI = {
 			.set({ deletedAt: null })
 			.where(eq(drafts.uuid, uuid))
 			.returning();
-		
+
 		triggerAutoSave();
 		return toApiFormat(result[0]);
 	},

@@ -1,13 +1,21 @@
-use fs2::FileExt;
-use futures_util::StreamExt;
-use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::{Read, Write};
+use std::fs::File;
+use std::fs::{
+    self,
+};
+use std::io::Read;
+use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter};
+
+use fs2::FileExt;
+use futures_util::StreamExt;
+use serde::Deserialize;
+use serde::Serialize;
+use sha2::Digest;
+use sha2::Sha256;
+use tauri::AppHandle;
+use tauri::Emitter;
 
 const UPDATE_MANIFEST_URL: &str =
     "https://github.com/joshuadavidthomas/dashtext/releases/latest/download/latest.json";
@@ -69,14 +77,13 @@ fn get_platform_key() -> &'static str {
 
 /// Get the path to the currently running executable
 fn get_current_exe() -> Result<PathBuf, String> {
-    std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))
+    std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {e}"))
 }
 
 /// Check if we can write to the binary's location (for self-update)
 fn can_write_to_binary_location() -> bool {
-    let exe = match get_current_exe() {
-        Ok(p) => p,
-        Err(_) => return false,
+    let Ok(exe) = get_current_exe() else {
+        return false;
     };
 
     // Try to write to the directory - if we can write, we can update
@@ -84,7 +91,7 @@ fn can_write_to_binary_location() -> bool {
         let test_path = parent.join(".dashtext-update-test");
         match File::create(&test_path) {
             Ok(_) => {
-                let _ = fs::remove_file(&test_path);
+                log_file_error("remove update write test", fs::remove_file(&test_path));
                 true
             }
             Err(_) => false,
@@ -100,7 +107,7 @@ fn get_lock_file_path() -> Result<PathBuf, String> {
         .ok_or_else(|| "Could not determine local data directory".to_string())?;
     let app_dir = data_dir.join("dashtext");
     fs::create_dir_all(&app_dir)
-        .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+        .map_err(|e| format!("Failed to create app data directory: {e}"))?;
     Ok(app_dir.join("update.lock"))
 }
 
@@ -108,10 +115,10 @@ fn get_lock_file_path() -> Result<PathBuf, String> {
 fn acquire_update_lock() -> Result<File, String> {
     let lock_path = get_lock_file_path()?;
     let lock_file =
-        File::create(&lock_path).map_err(|e| format!("Failed to create lock file: {}", e))?;
+        File::create(&lock_path).map_err(|e| format!("Failed to create lock file: {e}"))?;
     lock_file
         .try_lock_exclusive()
-        .map_err(|_| "Another update is already in progress".to_string())?;
+        .map_err(|error| format!("Another update is already in progress: {error}"))?;
     Ok(lock_file)
 }
 
@@ -119,7 +126,7 @@ fn acquire_update_lock() -> Result<File, String> {
 async fn fetch_manifest() -> Result<UpdateManifest, String> {
     let response = reqwest::get(UPDATE_MANIFEST_URL)
         .await
-        .map_err(|e| format!("Failed to fetch update manifest: {}", e))?;
+        .map_err(|e| format!("Failed to fetch update manifest: {e}"))?;
 
     if !response.status().is_success() {
         return Err(format!(
@@ -131,7 +138,7 @@ async fn fetch_manifest() -> Result<UpdateManifest, String> {
     response
         .json::<UpdateManifest>()
         .await
-        .map_err(|e| format!("Failed to parse update manifest: {}", e))
+        .map_err(|e| format!("Failed to parse update manifest: {e}"))
 }
 
 /// Compare two semver version strings
@@ -139,10 +146,7 @@ fn is_newer_version(current: &str, new: &str) -> bool {
     let current = current.trim_start_matches('v');
     let new = new.trim_start_matches('v');
 
-    match (
-        semver::Version::parse(current),
-        semver::Version::parse(new),
-    ) {
+    match (semver::Version::parse(current), semver::Version::parse(new)) {
         (Ok(c), Ok(n)) => n > c,
         _ => false, // If parsing fails, assume no update
     }
@@ -152,7 +156,7 @@ fn is_newer_version(current: &str, new: &str) -> bool {
 async fn download_file(app: &AppHandle, url: &str, dest: &PathBuf) -> Result<(), String> {
     let response = reqwest::get(url)
         .await
-        .map_err(|e| format!("Failed to download update: {}", e))?;
+        .map_err(|e| format!("Failed to download update: {e}"))?;
 
     if !response.status().is_success() {
         return Err(format!(
@@ -165,24 +169,35 @@ async fn download_file(app: &AppHandle, url: &str, dest: &PathBuf) -> Result<(),
     let mut downloaded: u64 = 0;
 
     let mut file =
-        File::create(dest).map_err(|e| format!("Failed to create download file: {}", e))?;
+        File::create(dest).map_err(|e| format!("Failed to create download file: {e}"))?;
 
     let mut stream = response.bytes_stream();
     while let Some(chunk_result) = stream.next().await {
-        let chunk = chunk_result.map_err(|e| format!("Download error: {}", e))?;
+        let chunk = chunk_result.map_err(|e| format!("Download error: {e}"))?;
         file.write_all(&chunk)
-            .map_err(|e| format!("Failed to write to file: {}", e))?;
+            .map_err(|e| format!("Failed to write to file: {e}"))?;
 
         downloaded += chunk.len() as u64;
 
-        let _ = app.emit(
+        let percent = total_size.filter(|total| *total > 0).and_then(|total| {
+            u8::try_from(
+                downloaded
+                    .saturating_mul(100)
+                    .saturating_div(total)
+                    .min(100),
+            )
+            .ok()
+        });
+        if let Err(error) = app.emit(
             "update-progress",
             DownloadProgress {
                 downloaded,
                 total: total_size,
-                percent: total_size.map(|t| ((downloaded * 100) / t) as u8),
+                percent,
             },
-        );
+        ) {
+            tracing::warn!("Failed to emit update progress: {error}");
+        }
     }
 
     Ok(())
@@ -193,7 +208,7 @@ fn verify_binary(path: &PathBuf) -> Result<(), String> {
     let output = std::process::Command::new(path)
         .arg("--version")
         .output()
-        .map_err(|e| format!("Failed to execute new binary: {}", e))?;
+        .map_err(|e| format!("Failed to execute new binary: {e}"))?;
 
     if !output.status.success() {
         return Err("New binary exited with error".to_string());
@@ -204,29 +219,35 @@ fn verify_binary(path: &PathBuf) -> Result<(), String> {
 
 /// Verify minisign signature of downloaded file
 fn verify_signature(file_path: &PathBuf, signature: &str) -> Result<(), String> {
-    use minisign_verify::{PublicKey, Signature};
+    use minisign_verify::PublicKey;
+    use minisign_verify::Signature;
 
     // Parse the public key
     let pk = PublicKey::from_base64(UPDATE_PUBLIC_KEY)
-        .map_err(|e| format!("Invalid public key: {}", e))?;
+        .map_err(|e| format!("Invalid public key: {e}"))?;
 
     // Parse the signature
-    let sig = Signature::decode(signature)
-        .map_err(|e| format!("Invalid signature format: {}", e))?;
+    let sig = Signature::decode(signature).map_err(|e| format!("Invalid signature format: {e}"))?;
 
     // Read the file
     let data = fs::read(file_path)
-        .map_err(|e| format!("Failed to read file for signature verification: {}", e))?;
+        .map_err(|e| format!("Failed to read file for signature verification: {e}"))?;
 
     // Verify
     pk.verify(&data, &sig, false)
-        .map_err(|_| "Signature verification failed - update may be tampered".to_string())
+        .map_err(|error| format!("Signature verification failed - update may be tampered: {error}"))
+}
+
+fn log_file_error(operation: &str, result: std::io::Result<()>) {
+    if let Err(error) = result {
+        tracing::warn!("Failed to {operation}: {error}");
+    }
 }
 
 /// Verify the SHA256 checksum of a file
 fn verify_checksum(file_path: &PathBuf, expected_sha256: &str) -> Result<(), String> {
     let mut file =
-        File::open(file_path).map_err(|e| format!("Failed to open file for verification: {}", e))?;
+        File::open(file_path).map_err(|e| format!("Failed to open file for verification: {e}"))?;
 
     let mut hasher = Sha256::new();
     let mut buffer = [0u8; 8192];
@@ -234,7 +255,7 @@ fn verify_checksum(file_path: &PathBuf, expected_sha256: &str) -> Result<(), Str
     loop {
         let bytes_read = file
             .read(&mut buffer)
-            .map_err(|e| format!("Failed to read file: {}", e))?;
+            .map_err(|e| format!("Failed to read file: {e}"))?;
         if bytes_read == 0 {
             break;
         }
@@ -246,8 +267,7 @@ fn verify_checksum(file_path: &PathBuf, expected_sha256: &str) -> Result<(), Str
 
     if actual_hex.to_lowercase() != expected_sha256.to_lowercase() {
         return Err(format!(
-            "Checksum verification failed. Expected: {}, Got: {}",
-            expected_sha256, actual_hex
+            "Checksum verification failed. Expected: {expected_sha256}, Got: {actual_hex}"
         ));
     }
 
@@ -256,15 +276,14 @@ fn verify_checksum(file_path: &PathBuf, expected_sha256: &str) -> Result<(), Str
 
 /// Extract a tar.gz archive and return the path to the binary
 fn extract_tarball(tarball_path: &PathBuf, dest_dir: &PathBuf) -> Result<PathBuf, String> {
-    let file =
-        File::open(tarball_path).map_err(|e| format!("Failed to open tarball: {}", e))?;
+    let file = File::open(tarball_path).map_err(|e| format!("Failed to open tarball: {e}"))?;
 
     let decoder = flate2::read::GzDecoder::new(file);
     let mut archive = tar::Archive::new(decoder);
 
     archive
         .unpack(dest_dir)
-        .map_err(|e| format!("Failed to extract tarball: {}", e))?;
+        .map_err(|e| format!("Failed to extract tarball: {e}"))?;
 
     // Find the dashtext binary in the extracted contents
     let binary_path = dest_dir.join("dashtext");
@@ -273,8 +292,8 @@ fn extract_tarball(tarball_path: &PathBuf, dest_dir: &PathBuf) -> Result<PathBuf
     }
 
     // Maybe it's in a subdirectory
-    for entry in fs::read_dir(dest_dir).map_err(|e| format!("Failed to read dir: {}", e))? {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
+    for entry in fs::read_dir(dest_dir).map_err(|e| format!("Failed to read dir: {e}"))? {
+        let entry = entry.map_err(|e| format!("Failed to read entry: {e}"))?;
         let path = entry.path();
         if path.is_dir() {
             let nested_binary = path.join("dashtext");
@@ -304,7 +323,7 @@ pub async fn check_update(app: AppHandle) -> Result<Option<UpdateInfo>, String> 
     let platform_info = manifest
         .platforms
         .get(platform_key)
-        .ok_or_else(|| format!("No update available for platform: {}", platform_key))?;
+        .ok_or_else(|| format!("No update available for platform: {platform_key}"))?;
 
     Ok(Some(UpdateInfo {
         current_version,
@@ -338,7 +357,7 @@ pub async fn download_and_install_update(app: AppHandle) -> Result<(), String> {
     let platform_info = manifest
         .platforms
         .get(platform_key)
-        .ok_or_else(|| format!("No update available for platform: {}", platform_key))?;
+        .ok_or_else(|| format!("No update available for platform: {platform_key}"))?;
 
     if !can_write_to_binary_location() {
         return Err(
@@ -351,7 +370,7 @@ pub async fn download_and_install_update(app: AppHandle) -> Result<(), String> {
 
     // Create temp directory for download
     let temp_dir =
-        tempfile::tempdir().map_err(|e| format!("Failed to create temp directory: {}", e))?;
+        tempfile::tempdir().map_err(|e| format!("Failed to create temp directory: {e}"))?;
 
     let tarball_path = temp_dir.path().join("update.tar.gz");
 
@@ -359,10 +378,9 @@ pub async fn download_and_install_update(app: AppHandle) -> Result<(), String> {
     download_file(&app, &platform_info.url, &tarball_path).await?;
 
     // Verify signature (authenticity)
-    let signature = platform_info
-        .signature
-        .as_ref()
-        .ok_or_else(|| "Update missing signature - refusing to install unsigned update".to_string())?;
+    let signature = platform_info.signature.as_ref().ok_or_else(|| {
+        "Update missing signature - refusing to install unsigned update".to_string()
+    })?;
     verify_signature(&tarball_path, signature)?;
 
     // Verify checksum (integrity)
@@ -371,60 +389,74 @@ pub async fn download_and_install_update(app: AppHandle) -> Result<(), String> {
     // Extract the tarball
     let extract_dir = temp_dir.path().join("extracted");
     fs::create_dir_all(&extract_dir)
-        .map_err(|e| format!("Failed to create extract directory: {}", e))?;
+        .map_err(|e| format!("Failed to create extract directory: {e}"))?;
 
     let new_binary = extract_tarball(&tarball_path, &extract_dir)?;
 
     // Make the new binary executable
     let mut perms = fs::metadata(&new_binary)
-        .map_err(|e| format!("Failed to get binary metadata: {}", e))?
+        .map_err(|e| format!("Failed to get binary metadata: {e}"))?
         .permissions();
     perms.set_mode(0o755);
     fs::set_permissions(&new_binary, perms)
-        .map_err(|e| format!("Failed to set binary permissions: {}", e))?;
+        .map_err(|e| format!("Failed to set binary permissions: {e}"))?;
 
     // Prepare paths for atomic swap
     let backup_path = current_exe.with_extension("old");
     let temp_new_path = current_exe.with_extension("new");
 
     // Copy new binary to same directory (for atomic rename)
-    fs::copy(&new_binary, &temp_new_path)
-        .map_err(|e| format!("Failed to copy new binary: {}", e))?;
+    fs::copy(&new_binary, &temp_new_path).map_err(|e| format!("Failed to copy new binary: {e}"))?;
 
     // Make the copied binary executable
     let mut perms = fs::metadata(&temp_new_path)
-        .map_err(|e| format!("Failed to get temp binary metadata: {}", e))?
+        .map_err(|e| format!("Failed to get temp binary metadata: {e}"))?
         .permissions();
     perms.set_mode(0o755);
     fs::set_permissions(&temp_new_path, perms)
-        .map_err(|e| format!("Failed to set temp binary permissions: {}", e))?;
+        .map_err(|e| format!("Failed to set temp binary permissions: {e}"))?;
 
     // Remove old backup if it exists
     if backup_path.exists() {
-        let _ = fs::remove_file(&backup_path);
+        log_file_error(
+            "remove previous update backup",
+            fs::remove_file(&backup_path),
+        );
     }
 
     // Atomic swap: current -> backup, new -> current
     fs::rename(&current_exe, &backup_path)
-        .map_err(|e| format!("Failed to backup current binary: {}", e))?;
+        .map_err(|e| format!("Failed to backup current binary: {e}"))?;
 
     if let Err(e) = fs::rename(&temp_new_path, &current_exe) {
         // Rollback: restore from backup
-        let _ = fs::rename(&backup_path, &current_exe);
-        return Err(format!("Failed to install new binary: {}", e));
+        log_file_error(
+            "restore update backup",
+            fs::rename(&backup_path, &current_exe),
+        );
+        return Err(format!("Failed to install new binary: {e}"));
     }
 
     // Verify the new binary works before cleaning up backup
     if let Err(e) = verify_binary(&current_exe) {
         // Rollback: restore the backup
-        let _ = fs::rename(&current_exe, &temp_new_path); // Move bad binary out
-        let _ = fs::rename(&backup_path, &current_exe);   // Restore good binary
-        let _ = fs::remove_file(&temp_new_path);          // Clean up bad binary
-        return Err(format!("Update verification failed, rolled back: {}", e));
+        log_file_error(
+            "move invalid update binary",
+            fs::rename(&current_exe, &temp_new_path),
+        );
+        log_file_error(
+            "restore update backup",
+            fs::rename(&backup_path, &current_exe),
+        );
+        log_file_error(
+            "remove invalid update binary",
+            fs::remove_file(&temp_new_path),
+        );
+        return Err(format!("Update verification failed, rolled back: {e}"));
     }
 
     // Success - clean up backup
-    let _ = fs::remove_file(&backup_path);
+    log_file_error("remove update backup", fs::remove_file(&backup_path));
 
     Ok(())
 }
@@ -440,7 +472,7 @@ pub fn restart_app() -> Result<(), String> {
         use std::os::unix::process::CommandExt;
         let err = std::process::Command::new(&current_exe).exec();
         // exec() only returns if there's an error
-        return Err(format!("Failed to restart: {}", err));
+        Err(format!("Failed to restart: {err}"))
     }
 
     #[cfg(not(unix))]
@@ -455,6 +487,7 @@ pub fn restart_app() -> Result<(), String> {
 
 /// Get the current version
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
 pub fn get_current_version(app: AppHandle) -> String {
     app.package_info().version.to_string()
 }
