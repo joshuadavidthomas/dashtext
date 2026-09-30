@@ -1,96 +1,139 @@
-# DashText
+# Dashtext
 
-A text editor for quick capture, inspired by [Drafts](https://getdrafts.com/).
+Quick capture for plain text, inspired by [Drafts](https://getdrafts.com/).
 
 ## About
 
-DashText is a desktop app for quickly capturing text that you'll process later. It's Drafts for people who aren't on Apple platforms (or prefer vim keybindings).
+Dashtext is a place to put text first and decide what to do with it later. Press a shortcut, type, save — the draft lands in your inbox. Come back when you have time to process it.
 
-Currently focused on fast draft capture with vim-style editing. Processing and actions coming in future releases.
+It is an open-source, cross-platform take on Drafts, written in Rust with [GPUI](https://www.gpui.rs/) and [GPUI Component](https://github.com/longbridge/gpui-component). Linux is the first-class target; macOS and Windows should work but are not yet tested.
 
 > [!NOTE]
-> This is an early, opinionated personal project. I built it because I wanted a Drafts-like app for Linux that fits my workflow. It's shaped by my preferences, though I'd love for it to be useful to others someday, maybe.
+> This is an early, opinionated personal project. Version 0.4 is a ground-up rewrite; nothing from the Tauri-based 0.3 releases carries over, including their data.
 
 ## Features
 
-![DashText editor with markdown content](assets/editor-with-content.png)
+![The drafts window: sidebar with Inbox, Flagged, Archive, All and Trash, the draft list and the editor](assets/drafts-window.png)
 
-- Quick capture window for rapid note-taking
-- Vim keybindings always enabled (via CodeMirror 6)
-- Tokyo Night theme
-- Lazyvim-inspired layout with sidebar
-- Local SQLite storage for drafts
-- Word and character count
-- Linux-focused (other platforms should work but are untested)
+- **Quick capture window** — a small window for getting text down (a floating panel on macOS). `Ctrl+Enter` saves to the inbox; `Esc` closes it and keeps the text for next time, even across restarts.
+- **Inbox, Flagged, Archive, All and Trash** — drafts live in one folder at a time; flags work across folders. The trash empties itself after 30 days.
+- **An editor that stays out of the way** — every draft is plain Markdown text. It saves as you type, the first line becomes the title, and empty drafts are discarded instead of piling up.
+- **Search** — words must all match, `"quoted phrases"` match exactly, `-word` excludes.
+- **Keyboard first** — every command has a shortcut, and the shortcuts are listed in the menus.
+- **Command line** — `dashtext capture` opens the capture window in the running app; `dashtext new` adds a draft without opening anything.
+
+![The quick capture window over the drafts window](assets/quick-capture.png)
+
+## Usage
+
+```text
+dashtext                      Open the drafts window
+dashtext capture              Open the quick capture window
+dashtext new "Call Sam"       Add a draft to the inbox
+echo "from a pipe" | dashtext new --flag
+```
+
+A second `dashtext` hands its request to the running instance, so `dashtext capture` opens instantly once the app is running.
+
+### Global capture shortcut
+
+Wayland does not let applications grab global shortcuts themselves, so bind one in your desktop environment to run `dashtext capture`:
+
+- **GNOME**: Settings → Keyboard → Keyboard Shortcuts → Custom Shortcuts
+- **KDE Plasma**: System Settings → Shortcuts → Add New → Command
+- **Sway / i3**: `bindsym $mod+Shift+d exec dashtext capture`
+- **Hyprland**: `bind = SUPER SHIFT, D, exec, dashtext capture`
+
+### Keyboard shortcuts
+
+| Command | Shortcut |
+| --- | --- |
+| New draft | `Ctrl+N` |
+| Quick capture | `Ctrl+Shift+N` |
+| Search drafts | `Ctrl+F` |
+| Back to the list from the editor | `Esc` |
+| Flag / unflag | `Ctrl+Shift+L` |
+| Archive / move to inbox | `Ctrl+Shift+A` |
+| Move to trash / restore | `Ctrl+Shift+Backspace` |
+| Delete permanently (in the trash) | `Ctrl+Shift+Delete` |
+| Inbox, Flagged, Archive, All, Trash | `Ctrl+1` … `Ctrl+5` |
+| Save capture | `Ctrl+Enter` |
+
+On macOS, `Cmd` replaces `Ctrl`.
+
+### Where your drafts live
+
+Drafts are stored in a SQLite database following the XDG Base Directory specification:
+
+| What | Linux |
+| --- | --- |
+| Draft library | `$XDG_DATA_HOME/dashtext/library.db` (usually `~/.local/share/dashtext/`) |
+| Instance socket | `$XDG_RUNTIME_DIR/dashtext/dashtext.sock` |
+
+macOS uses `~/Library/Application Support/app.dashtext.Dashtext/` and Windows uses `%APPDATA%\dashtext\Dashtext\data\`.
 
 ## Installation
 
-Binaries coming soon. For now, build from source.
+Binaries are not published yet. To build from source you need [Rust](https://rustup.rs/) and the native libraries GPUI uses. On Debian or Ubuntu:
 
-### From Source
+```bash
+sudo apt install build-essential clang cmake pkg-config \
+  libfontconfig-dev libfreetype-dev libwayland-dev \
+  libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libvulkan1
+```
 
-#### Requirements
-
-- [Bun](https://bun.sh/)
-- [Rust](https://rustup.rs/)
-- Platform-specific Tauri dependencies ([see Tauri docs](https://v2.tauri.app/start/prerequisites/))
-
-#### Setup
+Then:
 
 ```bash
 git clone https://github.com/joshuadavidthomas/dashtext.git
 cd dashtext
-bun install
+cargo build --release
+install -Dm755 target/release/dashtext ~/.local/bin/dashtext
+install -Dm644 resources/linux/app.dashtext.Dashtext.desktop \
+  ~/.local/share/applications/app.dashtext.Dashtext.desktop
 ```
 
-#### Building and Installation
+The desktop entry includes a *Quick Capture* action, so launchers and docks can open the capture window directly.
 
-Build the application and copy the binary to somewhere on your `PATH`:
+## Troubleshooting
 
-```bash
-bun run tauri build
-cp src-tauri/target/release/dashtext ~/.local/bin/
-```
+### It feels slow
 
-Optionally, create a desktop entry at `~/.local/share/applications/dashtext.desktop`:
+Dashtext draws with the GPU through Vulkan. Without a Vulkan driver (in many VMs and remote desktops, for example), it falls back to llvmpipe, which draws every frame on the CPU. Typing and scrolling then lag no matter how fast your CPU is, and Dashtext shows a *No GPU acceleration* notice. Set `DASHTEXT_ALLOW_EMULATED_GPU=1` to hide it.
 
-```ini
-[Desktop Entry]
-Name=DashText
-Comment=A text editor for quick capture
-Exec=dashtext
-Type=Application
-Categories=Utility;TextEditor;
-```
+- Run `vkcube` (from `vulkan-tools`) to check that Vulkan works.
+- On machines with two GPUs, choose one with `DRI_PRIME=1`, or with `ZED_DEVICE_ID=0x…` using the device ID shown by `lspci -nn | grep VGA`. Dashtext uses Zed's renderer, so Zed's [GPU troubleshooting](https://zed.dev/docs/linux#zed-fails-to-open-windows) applies too.
+- Debug builds are much slower than `cargo build --release`.
 
-There's no icon yet. If you'd like one, [Icon Kitchen](https://icon.kitchen/) can generate one for you.
+### Building runs out of memory
 
-## Someday/Maybe
+The release profile uses thin LTO with a single codegen unit. On small machines, build with `cargo build --profile release-fast` instead: it is still optimized, but it compiles in parallel without LTO.
 
-- [ ] Tray icon / global hotkey for quick capture
-- [ ] Draft actions/processing (similar to Drafts)
-- [ ] Built-in actions for common workflows
-- [ ] Scripting support for custom actions
-- [ ] Vim configuration options
-- [ ] Custom themes
-- [ ] User settings
-- [ ] Windows and macOS testing
-- [ ] Web version
-- [ ] Cross-device sync
+## Roadmap
+
+Tracked with [bd](https://github.com/steveyegge/beads) in `.beads/`. Highlights:
+
+- Tags, and workspaces built on them (saved filters with their own sort)
+- Actions: scriptable steps that send a draft somewhere (the scripting runtime is still undecided — WASM, Lua or JavaScript)
+- Version history for drafts
+- Markdown syntax highlighting and preview
+- Global shortcut via the XDG GlobalShortcuts portal
+- Import and export of Markdown files
+- Sync, and eventually mobile apps
 
 ## Contributing
 
-PRs are welcome, though I may be slow to review. This project uses:
+PRs are welcome, though I may be slow to review. The code is a Cargo workspace:
 
-- **Frontend**: SvelteKit + Svelte 5, Tailwind CSS v4, shadcn-svelte
-- **Editor**: CodeMirror 6 with @replit/codemirror-vim
-- **Backend**: Tauri v2 (Rust)
-- **Database**: SQLite via Drizzle ORM
+- `crates/dashtext-core` — the draft model and SQLite storage, with no UI dependencies
+- `crates/dashtext` — the desktop app (GPUI and GPUI Component)
+
+Run `just` to see the development commands (`just test`, `just clippy`, `just fmt`).
 
 ## Acknowledgments
 
-Inspired by [Drafts](https://getdrafts.com/) for iOS and macOS.
+Inspired by [Drafts](https://getdrafts.com/) by Agile Tortoise.
 
 ## License
 
-DashText is licensed under the Apache License, Version 2.0. See the [`LICENSE`](LICENSE) file for more information.
+Dashtext is licensed under the Apache License, Version 2.0. See the [`LICENSE`](LICENSE) file for more information.

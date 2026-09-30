@@ -18,6 +18,24 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Changed
+
+- Rewrote Dashtext as a native Rust application using GPUI and GPUI Component, replacing the Tauri and SvelteKit app. Drafts from 0.3 are not migrated.
+- Drafts are stored in a SQLite library under the XDG data directory (`~/.local/share/dashtext/library.db`).
+
+### Added
+
+- Quick capture window that keeps unsaved text across closes and restarts
+- Inbox, Flagged, Archive, All and Trash views; the trash is emptied after 30 days
+- Search with required words, `"exact phrases"` and `-exclusions`
+- `dashtext capture` and `dashtext new` commands, handled by the running instance when there is one
+- Application menus and keyboard shortcuts for every draft command
+- Desktop entry with a Quick Capture action
+
+### Removed
+
+- Vim mode, the web version and the built-in updater
+
 ## [0.3.1]
 
 ### Fixed

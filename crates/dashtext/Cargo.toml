@@ -1,0 +1,27 @@
+[package]
+name = "dashtext"
+description = "Quick capture for plain text, inspired by Drafts"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-channel.workspace = true
+chrono.workspace = true
+clap.workspace = true
+dashtext-core.workspace = true
+directories.workspace = true
+env_logger.workspace = true
+gpui-kit.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+gpui-kit = { workspace = true, features = ["test-support"] }
+tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -7,12 +7,13 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 echo "==> Checking native desktop dependencies"
+# GPUI's native dependencies, plus grim and wtype for screenshots and key
+# presses when driving the app on the orb Desktop.
 packages=(
-    build-essential ca-certificates clang cmake glslc
-    libasound2-dev libayatana-appindicator3-dev libfontconfig-dev libgtk-3-dev
-    librsvg2-dev libsoup-3.0-dev libvulkan-dev libvulkan1 libwayland-dev
-    libwebkit2gtk-4.1-dev libx11-xcb-dev libxkbcommon-dev
-    libxkbcommon-x11-dev patchelf pkg-config
+    build-essential ca-certificates clang cmake pkg-config
+    libfontconfig-dev libfreetype-dev libvulkan1 libwayland-dev
+    libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev mesa-vulkan-drivers
+    grim wtype
 )
 missing=()
 for package in "${packages[@]}"; do
@@ -50,12 +51,9 @@ for tool in cargo-hawk just prek zizmor; do
 done
 ln -sfn "$(mise which cargo-hawk)" "$cargo_home/bin/cargo-hawk"
 
-echo "==> Installing frontend dependencies"
-bun install --frozen-lockfile
-
 echo "==> Fetching locked Cargo dependencies for this orb's target"
 host=$(rustc -vV | sed -n 's/^host: //p')
-cargo fetch --manifest-path packages/desktop/src-tauri/Cargo.toml --locked --target "$host"
+cargo fetch --manifest-path Cargo.toml --locked --target "$host"
 
 echo "==> Installing pre-commit hooks and their environments"
 prek install --prepare-hooks

@@ -11,19 +11,11 @@ runs:
           build-essential \
           clang \
           cmake \
-          glslc \
-          libasound2-dev \
-          libayatana-appindicator3-dev \
           libfontconfig-dev \
-          libgtk-3-dev \
-          librsvg2-dev \
-          libsoup-3.0-dev \
-          libvulkan-dev \
+          libfreetype-dev \
           libvulkan1 \
           libwayland-dev \
-          libwebkit2gtk-4.1-dev \
           libx11-xcb-dev \
           libxkbcommon-dev \
           libxkbcommon-x11-dev \
-          patchelf \
           pkg-config

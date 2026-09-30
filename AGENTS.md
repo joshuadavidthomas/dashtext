@@ -4,105 +4,73 @@ This file provides guidance to AI coding assistants when working with code in th
 
 ## Project Overview
 
-Dashtext is a Tauri v2 desktop application with a SvelteKit frontend. It's a text editor with vim mode support, using CodeMirror 6 for the editor component. The app runs as a native desktop application via Tauri's Rust backend.
+Dashtext is an open-source, cross-platform take on [Drafts](https://getdrafts.com/): a quick-capture window and an inbox of plain-text (Markdown) drafts. It is a native Rust desktop app built with GPUI and GPUI Component (the `gpui-kit` crate from Longbridge). Linux is the primary target; macOS and Windows should keep compiling.
 
 ## Development Commands
 
 ```bash
-# Development (frontend only)
-bun run dev
-
-# Development (full Tauri app)
-bun run tauri dev
-
-# Build frontend
-bun run build
-
-# Build full Tauri application
-bun run tauri build
-
-# Type checking
-bun run check
-bun run check:watch
+just            # list recipes
+just build      # cargo build
+just test       # cargo test --workspace
+just clippy     # clippy with -D warnings (pedantic + restriction lints from Cargo.toml)
+just fmt        # rustfmt on the pinned nightly (tools/rustfmt)
+just hawk       # cargo-hawk production-panic checks (tools/hawk)
 ```
 
-## ⚠️ CRITICAL: Never Start Dev Servers
+Run `just fmt`, `just clippy` and `just test` before considering work done.
 
-**NEVER run `bun run dev`, `bun run tauri dev`, `npm start`, or any long-running development server automatically.**
+## ⚠️ Never Start the App in the Foreground
 
-These commands:
-- Block the terminal indefinitely
-- Prevent you from executing further commands
-- Cannot be easily stopped in this environment
-- Make it impossible to continue the session
+`cargo run` / `dashtext` start a GUI event loop that blocks the terminal. Do not run them directly. To try the app, either tell the user the command to run, or (in an Amp orb with the Desktop running) start it as a supervised service, for example:
 
-**If the user wants to test:**
-1. Tell them the command to run manually: `bun run tauri dev`
-2. Describe what to look for in the logs
-3. Let THEM start the server in their own terminal
-4. NEVER run it yourself
+```bash
+amp orb service start dashtext --command "env XDG_DATA_HOME=/tmp/dashtext-test target/debug/dashtext"
+```
 
-**Acceptable commands:**
-- ✅ `cargo check` - Quick compilation check
-- ✅ `cargo build` - Build without running
-- ✅ `bun run check` - Type checking only
-- ✅ `bun run build` - Build static assets
-
-**NEVER run:**
-- ❌ `bun run dev` or `npm run dev`
-- ❌ `bun run tauri dev` or any `*:dev` command
-- ❌ Any command with `--watch` or `-w` flags
-- ❌ Background processes with `&` for dev servers
+Use a throwaway `XDG_DATA_HOME` so tests never touch real drafts. `grim` takes Wayland screenshots and `wtype` sends key presses.
 
 ## Architecture
 
-### Frontend (SvelteKit + Svelte 5)
+```text
+crates/
+├── dashtext-core/   # Domain model + SQLite storage. No UI dependencies.
+│   ├── draft.rs     #   Draft, DraftId (UUIDv7), Folder, Timestamp, title/preview/stats
+│   ├── query.rs     #   Scope (Inbox/Flagged/Archive/All/Trash), Sort, SearchQuery
+│   ├── workspace.rs #   Workspace: a saved view (scope, sort; filters later)
+│   └── store.rs     #   Store: rusqlite, WAL, `user_version` migrations
+└── dashtext/        # The desktop app (binary).
+    ├── main.rs      #   Bootstrap: CLI, single instance, trash purge, GPUI app
+    ├── cli.rs       #   clap commands: open, capture, new
+    ├── instance.rs  #   Single-instance Unix socket (`dashtext capture` → running app)
+    ├── paths.rs     #   XDG locations via `directories`
+    ├── library.rs   #   Library entity: the only writer; emits LibraryEvent::{Saved, Deleted, Reloaded}
+    ├── app.rs       #   Window management (one drafts window, one capture window)
+    ├── commands.rs  #   GPUI actions and default key bindings
+    ├── menus.rs     #   App menus (native on macOS, AppMenuBar in the title bar elsewhere)
+    ├── drafts.rs    #   Drafts window: sidebar, list pane, toolbar, status bar
+    ├── drafts/      #   DraftList (ListDelegate) and DraftEditor (autosaving Textarea)
+    └── capture.rs   #   Quick capture window
+```
 
-- **Framework**: SvelteKit with adapter-static configured for SPA mode (Tauri requirement)
-- **State Management**: Svelte 5 runes ($state, $derived) for reactive state
-- **Styling**: Tailwind CSS v4 with shadcn-svelte components
-- **UI Components**: shadcn-svelte pattern in `$lib/components/ui/` (config in `components.json`)
+Key decisions:
 
-Editor state is managed via Svelte context (`src/lib/components/editor/context.svelte.ts`): `EditorState` class uses runes, created via `createEditorContext()` and consumed via `getEditorContext()`.
+- **Storage**: SQLite in `$XDG_DATA_HOME/dashtext/library.db`. Content is the source of truth; titles and previews are derived. Schema changes are appended to `MIGRATIONS` in `store.rs`; never edit a released migration. Evolvable view settings (workspaces) are JSON so they can grow without migrations.
+- **Single writer in the UI**: every mutation goes through `Library`, which emits a `LibraryEvent` naming what changed: `Saved(draft)` and `Deleted(id)` let the drafts window patch one list row (this runs on every autosave, so it must not re-read the library), and `Reloaded` means re-read the scope. Library events are delivered after the current update, so code that moves or flags a draft and then acts on it in the same update must hand the new state to the editor itself (see `move_on_if_gone`). External writers (`dashtext new`) send `Request::Reload` over the instance socket.
+- **Commands are actions**: buttons, menus and key bindings dispatch the same actions from `commands.rs`, handled by the view that owns them.
+- **Room to grow**: workspaces (saved filters), draft actions/scripting (runtime undecided: WASM, Lua or JS) and mobile front ends should build on `dashtext-core`, not on the GUI crate.
 
-Vim mode is always enabled via `@replit/codemirror-vim`.
+## GPUI and GPUI Component
 
-### Backend (Tauri/Rust)
+Applications depend only on `gpui-kit` (pinned exactly; it pins the matching `gpui-pre` snapshot). GPUI is `use gpui_kit::*`; components are under `gpui_kit::component`, icons under `gpui_kit::assets`.
 
-- `src-tauri/src/lib.rs` - Tauri commands and app initialization
-- Window configured without decorations (custom titlebar via MenuBar)
+The upstream skill docs are the reference: <https://gpui-kit.com/docs/coding-guides.md> and <https://gpui-kit.com/docs/design-guides.md> (append `.md` to any page on gpui-kit.com; component pages are at `https://gpui-kit.com/component/{name}.md`). In particular:
 
-### Path Aliases
-
-- `$lib` → `src/lib`
-
-### Error Handling
-
-Consult the Svelte MCP server (`get-documentation` with `svelte/svelte-boundary`, `kit/errors`) for error handling patterns.
-
-## Svelte
-
-**Co-location**: SvelteKit ignores files without `+` prefix in route directories. Place components next to the routes that use them; only move to `$lib` when shared across multiple routes.
-
-Svelte 5 runes are fundamentally different from React hooks - they look similar but work differently. Claude's training data includes React patterns and outdated Svelte 3/4 code, so consult the MCP server before writing Svelte components to ensure you're using current idioms.
-
-| React/old Svelte pattern | Svelte 5 equivalent |
-|--------------------------|---------------------|
-| `useState`, stores | `$state` rune |
-| `useMemo`, `useCallback` | `$derived` (dependencies auto-tracked) |
-| `useEffect` + deps array | `$effect` (dependencies auto-tracked) |
-| Context.Provider / useContext | `setContext` / `getContext` |
-| Render props, children as function | Snippets (`{#snippet}`) |
-
-### MCP Server
-
-The Svelte MCP server provides authoritative Svelte 5 and SvelteKit documentation. Consult it before implementing Svelte components, when unsure about idioms, or when debugging Svelte-specific issues - this prevents relying on potentially outdated training data.
-
-**Tools:**
-1. **list-sections** - Call before get-documentation to discover available docs
-2. **get-documentation** - Fetch relevant sections for your task
-3. **svelte-autofixer** - Run on Svelte code before presenting to user to catch issues
-4. **playground-link** - Ask user first; never use for code written to project files
+- Never invent an API — check the source of the pinned version in `~/.cargo/registry/src/*/gpui-component-0.7.0` and `gpui-base-0.7.0`.
+- Colors come from `cx.theme()`; spacing and sizes use rem helpers (`p_4()`, `text_sm()`), not raw `px()` or hex.
+- Repeated elements need stable domain ids (`ElementId::Uuid(draft.id().as_uuid())`), never list indexes.
+- Keep `render` side-effect free; mutate in named methods and `cx.notify()` once.
+- Bind keys before calling `cx.set_menus`.
+- Extra Lucide icons must be added to `icon_assets!` in `assets.rs`, or they render blank.
 
 ## Issue Tracking with bd (beads)
 

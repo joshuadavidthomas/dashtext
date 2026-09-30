@@ -2,7 +2,7 @@ set dotenv-load
 set unstable
 
 export PATH := env_var("HOME") + "/.cargo/bin:" + env_var("PATH")
-manifest := justfile_directory() / "packages/desktop/src-tauri/Cargo.toml"
+manifest := justfile_directory() / "Cargo.toml"
 
 # List all available commands
 [private]
@@ -13,10 +13,10 @@ build *ARGS:
     cargo build --manifest-path "{{ manifest }}" {{ ARGS }}
 
 check *ARGS:
-    cargo check --manifest-path "{{ manifest }}" --locked --all-targets --all-features {{ ARGS }}
+    cargo check --manifest-path "{{ manifest }}" --workspace --locked --all-targets --all-features {{ ARGS }}
 
 clippy *ARGS:
-    cargo clippy --manifest-path "{{ manifest }}" --locked --all-targets --all-features {{ ARGS }} -- -D warnings
+    cargo clippy --manifest-path "{{ manifest }}" --workspace --locked --all-targets --all-features {{ ARGS }} -- -D warnings
 
 rustfmt_channel := `sed -n 's/^channel = "\([^"]*\)"/\1/p' tools/rustfmt/rust-toolchain.toml`
 
@@ -33,7 +33,7 @@ hawk *ARGS:
     set -euo pipefail
     cargo "+{{ hawk_channel }}" hawk check \
         --manifest-path "{{ manifest }}" \
-        --target-dir "{{ justfile_directory() }}/packages/desktop/src-tauri/target/hawk" \
+        --target-dir "{{ justfile_directory() }}/target/hawk" \
         -D warnings "$@"
 
 # Run all pre-commit hooks against the repository.
@@ -42,4 +42,4 @@ lint *ARGS:
     prek run --all-files --show-diff-on-failure --color always {{ ARGS }}
 
 test *ARGS:
-    cargo test --manifest-path "{{ manifest }}" --locked --all-features {{ ARGS }}
+    cargo test --manifest-path "{{ manifest }}" --workspace --locked --all-features {{ ARGS }}
