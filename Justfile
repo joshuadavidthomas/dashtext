@@ -12,6 +12,9 @@ default:
 build *ARGS:
     cargo build --manifest-path "{{ manifest }}" {{ ARGS }}
 
+run *ARGS:
+    cargo run --manifest-path "{{ manifest }}" --release -- {{ ARGS }}
+
 check *ARGS:
     cargo check --manifest-path "{{ manifest }}" --workspace --locked --all-targets --all-features {{ ARGS }}
 
