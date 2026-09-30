@@ -1,0 +1,19 @@
+[Desktop Entry]
+Type=Application
+Name=Dashtext
+GenericName=Text Capture
+Comment=Capture text now, decide what to do with it later
+Exec=dashtext
+Terminal=false
+Categories=Utility;TextEditor;
+Keywords=notes;drafts;capture;inbox;markdown;
+StartupWMClass=app.dashtext.Dashtext
+Actions=capture;open;
+
+[Desktop Action capture]
+Name=Quick Capture
+Exec=dashtext capture
+
+[Desktop Action open]
+Name=Open Drafts
+Exec=dashtext open

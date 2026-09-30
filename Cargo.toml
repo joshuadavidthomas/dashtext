@@ -1,0 +1,89 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+default-members = ["crates/dashtext"]
+
+[workspace.package]
+version = "0.4.0"
+authors = ["Josh Thomas <josh@joshthomas.dev>"]
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/joshuadavidthomas/dashtext"
+rust-version = "1.97"
+
+[workspace.dependencies]
+dashtext-core = { path = "crates/dashtext-core" }
+
+anyhow = "1"
+async-channel = "2"
+chrono = "0.4"
+clap = { version = "4", features = ["derive"] }
+directories = "6"
+env_logger = "0.11"
+gpui-kit = "=0.7.0"
+log = "0.4"
+rusqlite = { version = "0.40", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+thiserror = "2"
+uuid = { version = "1", features = ["v7"] }
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+# pedantic
+missing_errors_doc = "allow"
+
+# restriction
+clone_on_ref_ptr = "warn"
+dbg_macro = "warn"
+expect_used = "warn"
+get_unwrap = "warn"
+let_underscore_must_use = "warn"
+map_err_ignore = "warn"
+mem_forget = "warn"
+mod_module_files = "warn"
+multiple_unsafe_ops_per_block = "warn"
+panic_in_result_fn = "warn"
+todo = "warn"
+undocumented_unsafe_blocks = "warn"
+unimplemented = "warn"
+unreachable = "warn"
+unused_result_ok = "warn"
+unwrap_in_result = "warn"
+unwrap_used = "warn"
+wildcard_enum_match_arm = "warn"
+
+[profile.dev]
+debug = "line-tables-only"
+
+# Hot paths in every frame (layout, SVG icons) and proc macros are slow
+# unoptimized; optimize them even in debug builds, as Zed does.
+[profile.dev.package]
+"*" = { debug = false }
+gpui-pre-macros = { opt-level = 3 }
+gpui-pre-derive-refineable = { opt-level = 3 }
+gpui-pre-util-macros = { opt-level = 3 }
+proc-macro2 = { opt-level = 3 }
+quote = { opt-level = 3 }
+syn = { opt-level = 3 }
+resvg = { opt-level = 3 }
+serde_json = { opt-level = 3 }
+taffy = { opt-level = 3 }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
+
+# The app crate changes most often; keep its codegen parallel.
+[profile.release.package.dashtext]
+codegen-units = 16
+
+# Optimized like release but much cheaper to build: for profiling, and for
+# machines where `codegen-units = 1` + LTO runs out of memory.
+[profile.release-fast]
+inherits = "release"
+lto = false
+codegen-units = 16

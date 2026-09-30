@@ -3,3 +3,4 @@ accept-comment-above-statement = true
 allow-expect-in-consts = true
 allow-expect-in-tests = true
 allow-unwrap-in-consts = true
+doc-valid-idents = ["SQLite", "UUIDv7", "GPUI", ".."]

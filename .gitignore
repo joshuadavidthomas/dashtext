@@ -1,15 +1,9 @@
-!.env.example
-!CLAUDE.md
 .DS_Store
 .env
 .env.*
+!.env.example
 .amp/portals/
-.svelte-kit
 .worktrees
+/target
 AGENTS.local.md
 CLAUDE.local.md
-build
-node_modules
-package
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*

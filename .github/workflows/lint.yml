@@ -61,7 +61,7 @@ jobs:
 
       - name: Run rustfmt
         working-directory: tools/rustfmt
-        run: cargo fmt --manifest-path "${{ github.workspace }}/packages/desktop/src-tauri/Cargo.toml" --all -- --check
+        run: cargo fmt --manifest-path "${{ github.workspace }}/Cargo.toml" --all -- --check
 
   clippy:
     runs-on: ubuntu-24.04
@@ -87,7 +87,7 @@ jobs:
           install_args: rust
 
       - name: Run clippy
-        run: cargo clippy --manifest-path packages/desktop/src-tauri/Cargo.toml --locked --all-targets --all-features -- -D warnings
+        run: cargo clippy --manifest-path Cargo.toml --workspace --locked --all-targets --all-features -- -D warnings
 
   hawk:
     runs-on: ubuntu-24.04
@@ -115,7 +115,7 @@ jobs:
 
       - name: Run hawk
         working-directory: tools/hawk
-        run: cargo hawk check --manifest-path "${{ github.workspace }}/packages/desktop/src-tauri/Cargo.toml" --target-dir "${{ github.workspace }}/packages/desktop/src-tauri/target/hawk" -D warnings
+        run: cargo hawk check --manifest-path "${{ github.workspace }}/Cargo.toml" --target-dir "${{ github.workspace }}/target/hawk" -D warnings
 
   check:
     runs-on: ubuntu-24.04
@@ -141,4 +141,30 @@ jobs:
           install_args: rust
 
       - name: Run cargo check
-        run: cargo check --manifest-path packages/desktop/src-tauri/Cargo.toml --locked --all-targets --all-features
+        run: cargo check --manifest-path Cargo.toml --workspace --locked --all-targets --all-features
+
+  test:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/install-linux-dependencies
+
+      - name: Cache rustup toolchain
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.rustup
+          key: ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-${{ hashFiles('rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: rust
+
+      - name: Run tests
+        run: cargo test --manifest-path Cargo.toml --workspace --locked --all-features
