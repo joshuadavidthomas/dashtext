@@ -92,7 +92,7 @@ codegen-units = 16
 # gpui-pre names and versions and re-export the fork. When gpui-kit moves to a
 # new gpui-pre, these must move to a gpui-fast revision with matching compat
 # crates, or Cargo warns the patch is unused and silently keeps the snapshot.
-# See https://github.com/longbridge/gpui-fast/blob/main/compat/README.md
+# See https://github.com/longbridge/gpui-fast/blob/edbd7641e9cc5afae84c542e04a13b3171489875/compat/README.md
 [patch.crates-io]
 gpui-pre = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }
 gpui-pre-macros = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }
