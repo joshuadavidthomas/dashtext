@@ -3,6 +3,8 @@
 mod editor;
 mod list;
 
+use std::time::Duration;
+
 use dashtext_core::Draft;
 use dashtext_core::DraftId;
 use dashtext_core::Folder;
@@ -65,6 +67,9 @@ use crate::menus;
 use crate::menus::MenuState;
 use crate::time_format;
 
+/// How often the status bar's relative time ("5 minutes ago") is redrawn.
+const STATUS_CLOCK_INTERVAL: Duration = Duration::from_mins(1);
+
 pub struct DraftsWindow {
     library: Entity<Library>,
     workspace: Workspace,
@@ -114,6 +119,18 @@ impl DraftsWindow {
             closing_editor.update(cx, DraftEditor::finish);
             true
         });
+
+        // The status bar reads the clock, which no entity tracks; redraw it as
+        // time passes instead of waiting for an unrelated change.
+        cx.spawn(async move |this, cx| {
+            loop {
+                cx.background_executor().timer(STATUS_CLOCK_INTERVAL).await;
+                if this.update(cx, |_, cx| cx.notify()).is_err() {
+                    break;
+                }
+            }
+        })
+        .detach();
 
         let mut this = Self {
             library,
