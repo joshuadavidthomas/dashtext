@@ -20,7 +20,7 @@ chrono = "0.4"
 clap = { version = "4", features = ["derive"] }
 directories = "6"
 env_logger = "0.11"
-gpui-kit = "=0.7.0"
+gpui-kit = "=0.7.1"
 log = "0.4"
 rusqlite = { version = "0.40", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
@@ -62,9 +62,8 @@ debug = "line-tables-only"
 # unoptimized; optimize them even in debug builds, as Zed does.
 [profile.dev.package]
 "*" = { debug = false }
-gpui-pre-macros = { opt-level = 3 }
-gpui-pre-derive-refineable = { opt-level = 3 }
-gpui-pre-util-macros = { opt-level = 3 }
+gpui_macros = { opt-level = 3 }
+derive_refineable = { opt-level = 3 }
 proc-macro2 = { opt-level = 3 }
 quote = { opt-level = 3 }
 syn = { opt-level = 3 }
@@ -87,3 +86,16 @@ codegen-units = 16
 inherits = "release"
 lto = false
 codegen-units = 16
+
+# Run on gpui-fast, Longbridge's GPUI fork with retained-mode rendering, in
+# place of the gpui-pre snapshot gpui-kit pins: its compat crates carry the
+# gpui-pre names and versions and re-export the fork. When gpui-kit moves to a
+# new gpui-pre, these must move to a gpui-fast revision with matching compat
+# crates, or Cargo warns the patch is unused and silently keeps the snapshot.
+# See https://github.com/longbridge/gpui-fast/blob/edbd7641e9cc5afae84c542e04a13b3171489875/compat/README.md
+[patch.crates-io]
+gpui-pre = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }
+gpui-pre-macros = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }
+gpui-pre-platform = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }
+gpui-pre-sum-tree = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }
+gpui-pre-web = { git = "https://github.com/longbridge/gpui-fast", rev = "edbd7641e9cc5afae84c542e04a13b3171489875" }

@@ -63,9 +63,13 @@ Key decisions:
 
 Applications depend only on `gpui-kit` (pinned exactly; it pins the matching `gpui-pre` snapshot). GPUI is `use gpui_kit::*`; components are under `gpui_kit::component`, icons under `gpui_kit::assets`.
 
+GPUI itself is [gpui-fast](https://github.com/longbridge/gpui-fast), swapped in for `gpui-pre` by `[patch.crates-io]` in `Cargo.toml`. Upgrading `gpui-kit` means moving that patch to a gpui-fast revision whose `compat/` crates match the new `gpui-pre` version. gpui-fast's macros emit `gpui::` paths, hence `extern crate gpui_kit as gpui;` in `main.rs`.
+
+gpui-fast renders in retained mode: a view is rebuilt only when something it read changed. Entities, globals, list and scroll state are tracked; anything else `render` reads (the clock, an `Rc<RefCell<..>>`) must be followed by `cx.notify()` when it changes, or the view goes stale (see the status bar's clock in `drafts.rs`). Notify only on real changes, never from prepaint or paint. To check whether retention causes a stale view, run with `GPUI_VIEW_RETENTION=0`.
+
 The upstream skill docs are the reference: <https://gpui-kit.com/docs/coding-guides.md> and <https://gpui-kit.com/docs/design-guides.md> (append `.md` to any page on gpui-kit.com; component pages are at `https://gpui-kit.com/component/{name}.md`). In particular:
 
-- Never invent an API — check the source of the pinned version in `~/.cargo/registry/src/*/gpui-component-0.7.0` and `gpui-base-0.7.0`.
+- Never invent an API — check the source of the pinned version in `~/.cargo/registry/src/*/gpui-component-0.7.1` and `gpui-base-0.7.1`.
 - Colors come from `cx.theme()`; spacing and sizes use rem helpers (`p_4()`, `text_sm()`), not raw `px()` or hex.
 - Repeated elements need stable domain ids (`ElementId::Uuid(draft.id().as_uuid())`), never list indexes.
 - Keep `render` side-effect free; mutate in named methods and `cx.notify()` once.

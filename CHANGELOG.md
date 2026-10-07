@@ -22,6 +22,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 - Rewrote Dashtext as a native Rust application using GPUI and GPUI Component, replacing the Tauri and SvelteKit app. Drafts from 0.3 are not migrated.
 - Drafts are stored in a SQLite library under the XDG data directory (`~/.local/share/dashtext/library.db`).
+- Render with [gpui-fast](https://github.com/longbridge/gpui-fast), which redraws only views that changed: much less CPU while idle and typing.
 
 ### Added
 

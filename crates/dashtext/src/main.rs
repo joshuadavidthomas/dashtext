@@ -1,5 +1,8 @@
 //! Dashtext: quick capture for plain text, inspired by Drafts.
 
+// gpui-fast's macros emit `gpui::` paths, where gpui-pre's emit `::gpui_kit::`.
+extern crate gpui_kit as gpui;
+
 mod app;
 mod assets;
 mod capture;
