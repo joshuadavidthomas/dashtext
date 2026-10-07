@@ -1,29 +1,27 @@
 set dotenv-load
 set unstable
 
-manifest := justfile_directory() / "Cargo.toml"
-
 # List all available commands
 [private]
 default:
     @just --list
 
 build *ARGS:
-    cargo build --manifest-path "{{ manifest }}" {{ ARGS }}
+    cargo build {{ ARGS }}
 
 run *ARGS:
-    cargo run --manifest-path "{{ manifest }}" --release -- {{ ARGS }}
+    cargo run --release -- {{ ARGS }}
 
 check *ARGS:
-    cargo check --manifest-path "{{ manifest }}" --workspace --locked --all-targets --all-features {{ ARGS }}
+    cargo check --workspace --locked --all-targets --all-features {{ ARGS }}
 
 clippy *ARGS:
-    cargo clippy --manifest-path "{{ manifest }}" --workspace --locked --all-targets --all-features {{ ARGS }} -- -D warnings
+    cargo clippy --workspace --locked --all-targets --all-features {{ ARGS }} -- -D warnings
 
 rustfmt_channel := `sed -n 's/^channel = "\([^"]*\)"/\1/p' tools/rustfmt/rust-toolchain.toml`
 
 fmt *ARGS:
-    cargo "+{{ rustfmt_channel }}" fmt --manifest-path "{{ manifest }}" --all {{ ARGS }}
+    cargo "+{{ rustfmt_channel }}" fmt --manifest-path "{{ justfile_directory() }}/Cargo.toml" --all {{ ARGS }}
 
 # cargo-hawk must run on the toolchain it was built against.
 # Keep this paired with the Hawk version in mise.toml.
@@ -34,7 +32,7 @@ hawk *ARGS:
     #!/usr/bin/env bash
     set -euo pipefail
     cargo "+{{ hawk_channel }}" hawk check \
-        --manifest-path "{{ manifest }}" \
+        --manifest-path "{{ justfile_directory() }}/Cargo.toml" \
         --target-dir "{{ justfile_directory() }}/target/hawk" \
         -D warnings "$@"
 
@@ -44,4 +42,4 @@ lint *ARGS:
     prek run --all-files --show-diff-on-failure --color always {{ ARGS }}
 
 test *ARGS:
-    cargo test --manifest-path "{{ manifest }}" --workspace --locked --all-features {{ ARGS }}
+    cargo test --workspace --locked --all-features {{ ARGS }}
