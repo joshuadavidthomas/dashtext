@@ -1,7 +1,6 @@
 set dotenv-load
 set unstable
 
-export PATH := env_var("HOME") + "/.cargo/bin:" + env_var("PATH")
 manifest := justfile_directory() / "Cargo.toml"
 
 # List all available commands
