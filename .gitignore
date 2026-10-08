@@ -7,3 +7,7 @@
 /target
 AGENTS.local.md
 CLAUDE.local.md
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+.direnv

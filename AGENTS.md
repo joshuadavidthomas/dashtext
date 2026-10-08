@@ -19,6 +19,8 @@ just hawk       # cargo-hawk production-panic checks (tools/hawk)
 
 Run `just fmt`, `just clippy` and `just test` before considering work done.
 
+The toolchains and tools come from devenv (`devenv.nix`); direnv loads them on `cd`. If `cargo fmt` or `cargo hawk` isn't found, your shell skipped direnv: prefix the command with `devenv shell --`.
+
 ## ⚠️ Never Start the App in the Foreground
 
 `cargo run` / `dashtext` start a GUI event loop that blocks the terminal. Do not run them directly. To try the app, either tell the user the command to run, or (in an Amp orb with the Desktop running) start it as a supervised service, for example:
