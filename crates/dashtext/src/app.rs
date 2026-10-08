@@ -56,13 +56,14 @@ pub fn init(cx: &mut App) {
         }
     })
     .detach();
-    // Clicking the Dock icon with no windows open brings the drafts back.
-    #[cfg(target_os = "macos")]
-    cx.on_reopen(|cx| {
-        if cx.windows().is_empty() {
-            open_drafts(cx);
-        }
-    });
+}
+
+/// Clicking the Dock icon with no windows open brings the drafts back.
+#[cfg(target_os = "macos")]
+pub fn reopen(cx: &mut App) {
+    if cx.windows().is_empty() {
+        open_drafts(cx);
+    }
 }
 
 pub fn handle(request: Request, cx: &mut App) {
