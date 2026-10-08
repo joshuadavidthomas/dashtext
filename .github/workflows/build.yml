@@ -51,6 +51,8 @@ jobs:
         with:
           persist-credentials: false
 
+      # Built outside devenv: a binary built against Nix's libraries looks for them in /nix/store,
+      # which users' machines don't have.
       - uses: $/.github/actions/install-linux-dependencies
 
       - name: Install Rust

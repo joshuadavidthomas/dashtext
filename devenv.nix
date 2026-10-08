@@ -25,6 +25,7 @@ let
   '';
   hawk = pkgs.stdenv.mkDerivation (finalAttrs: {
     pname = "cargo-hawk";
+    # Keep paired with tools/hawk/rust-toolchain.toml.
     version = "0.1.14";
     src = pkgs.fetchurl (
       let
@@ -61,8 +62,8 @@ let
     libxkbcommon
     vulkan-loader
     wayland
-    xorg.libX11
-    xorg.libxcb
+    libx11
+    libxcb
   ];
 in
 {
@@ -76,6 +77,7 @@ in
     hawk
     rustfmt
     pkgs.just
+    pkgs.nodejs # for prek's ast-grep hook; prek's own download needs libraries Debian lacks
     pkgs.prek
     pkgs.zizmor
   ] ++ lib.optionals isLinux ([ pkgs.cmake pkgs.pkg-config ] ++ linuxRuntimeLibs);
@@ -83,6 +85,7 @@ in
   # `devenv test`: everything CI checks
   enterTest = ''
     just fmt --check
+    just check
     just clippy
     just hawk
     just test

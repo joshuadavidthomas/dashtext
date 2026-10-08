@@ -128,7 +128,9 @@ PRs are welcome, though I may be slow to review. The code is a Cargo workspace:
 - `crates/dashtext-core` — the draft model and SQLite storage, with no UI dependencies
 - `crates/dashtext` — the desktop app (GPUI and GPUI Component)
 
-Run `just` to see the development commands (`just test`, `just clippy`, `just fmt`).
+The toolchains and tools come from [devenv](https://devenv.sh/), so you need [Nix](https://nixos.org/download/) and devenv. [direnv](https://direnv.net/) is optional: with it, `direnv allow` loads the environment whenever you `cd` into the repository. Without it, run `devenv shell`.
+
+Run `just` to see the development commands (`just test`, `just clippy`, `just fmt`), and `devenv test` to run everything CI checks.
 
 ## Acknowledgments
 

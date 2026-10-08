@@ -22,10 +22,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install development tools
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          install_args: prek
+      - uses: $/.github/actions/setup-devenv
 
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -33,6 +30,7 @@ jobs:
           key: prek-1|${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: Run pre-commit
+        shell: devenv shell -- bash -e {0}
         run: |
           SKIP=cargo-fmt,cargo-clippy \
           prek run --all-files --show-diff-on-failure --color always
@@ -46,21 +44,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Cache rustup toolchain
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.rustup
-          key: ${{ runner.os }}-${{ runner.arch }}-rustup-nightly-${{ hashFiles('tools/rustfmt/rust-toolchain.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rustup-nightly-
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          working_directory: tools/rustfmt
-          install_args: rust
+      - uses: $/.github/actions/setup-devenv
 
       - name: Run rustfmt
         working-directory: tools/rustfmt
+        shell: devenv shell -- bash -e {0}
         run: cargo fmt --manifest-path "${{ github.workspace }}/Cargo.toml" --all -- --check
 
   clippy:
@@ -72,21 +60,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/install-linux-dependencies
-
-      - name: Cache rustup toolchain
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.rustup
-          key: ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-${{ hashFiles('rust-toolchain.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          install_args: rust
+      - uses: $/.github/actions/setup-devenv
 
       - name: Run clippy
+        shell: devenv shell -- bash -e {0}
         run: cargo clippy --manifest-path Cargo.toml --workspace --locked --all-targets --all-features -- -D warnings
 
   hawk:
@@ -98,23 +75,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/install-linux-dependencies
-
-      - name: Cache rustup toolchain
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.rustup
-          key: ${{ runner.os }}-${{ runner.arch }}-rustup-hawk-${{ hashFiles('tools/hawk/rust-toolchain.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rustup-hawk-
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          working_directory: tools/hawk
-          install_args: rust github:astral-sh/hawk
+      - uses: $/.github/actions/setup-devenv
 
       - name: Run hawk
         working-directory: tools/hawk
+        shell: devenv shell -- bash -e {0}
         run: cargo hawk check --manifest-path "${{ github.workspace }}/Cargo.toml" --target-dir "${{ github.workspace }}/target/hawk" -D warnings
 
   check:
@@ -126,21 +91,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/install-linux-dependencies
-
-      - name: Cache rustup toolchain
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.rustup
-          key: ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-${{ hashFiles('rust-toolchain.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          install_args: rust
+      - uses: $/.github/actions/setup-devenv
 
       - name: Run cargo check
+        shell: devenv shell -- bash -e {0}
         run: cargo check --manifest-path Cargo.toml --workspace --locked --all-targets --all-features
 
   test:
@@ -152,19 +106,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/install-linux-dependencies
-
-      - name: Cache rustup toolchain
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.rustup
-          key: ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-${{ hashFiles('rust-toolchain.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rustup-pinned-
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
-        with:
-          install_args: rust
+      - uses: $/.github/actions/setup-devenv
 
       - name: Run tests
+        shell: devenv shell -- bash -e {0}
         run: cargo test --manifest-path Cargo.toml --workspace --locked --all-features
