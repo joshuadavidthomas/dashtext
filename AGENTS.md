@@ -15,9 +15,12 @@ just test       # cargo test --workspace
 just clippy     # clippy with -D warnings (pedantic + restriction lints from Cargo.toml)
 just fmt        # rustfmt on the pinned nightly (tools/rustfmt)
 just hawk       # cargo-hawk production-panic checks (tools/hawk)
+devenv test     # everything CI checks
 ```
 
 Run `just fmt`, `just clippy` and `just test` before considering work done.
+
+The toolchains and tools come from devenv (`devenv.nix`); direnv loads them on `cd`. If `cargo fmt` or `cargo hawk` isn't found, your shell skipped direnv: prefix the command with `devenv shell --`.
 
 ## ⚠️ Never Start the App in the Foreground
 

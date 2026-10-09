@@ -76,34 +76,35 @@ fn run_gui(paths: &Paths, listener: instance::Listener, request: Request) -> any
         )
     })?;
 
-    gpui_kit::application()
-        .with_assets(AppAssets)
-        .run(move |cx| {
-            gpui_kit::init(cx);
-            cx.set_app_identity(app::APP_ID, "Dashtext");
-            Theme::sync_system_appearance(None, cx);
-            commands::bind_keys(cx);
-            Library::init(store, cx);
-            app::init(cx);
+    let application = gpui_kit::application().with_assets(AppAssets);
+    #[cfg(target_os = "macos")]
+    application.on_reopen(app::reopen);
+    application.run(move |cx| {
+        gpui_kit::init(cx);
+        cx.set_app_identity(app::APP_ID, "Dashtext");
+        Theme::sync_system_appearance(None, cx);
+        commands::bind_keys(cx);
+        Library::init(store, cx);
+        app::init(cx);
 
-            // Remove the socket on the way out so the next launch starts cleanly.
-            let mut socket = Some(socket);
-            cx.on_app_quit(move |_| {
-                drop(socket.take());
-                async {}
-            })
-            .detach();
+        // Remove the socket on the way out so the next launch starts cleanly.
+        let mut socket = Some(socket);
+        cx.on_app_quit(move |_| {
+            drop(socket.take());
+            async {}
+        })
+        .detach();
 
-            cx.spawn(async move |cx| {
-                while let Ok(request) = requests.recv().await {
-                    cx.update(|cx| app::handle(request, cx));
-                }
-            })
-            .detach();
+        cx.spawn(async move |cx| {
+            while let Ok(request) = requests.recv().await {
+                cx.update(|cx| app::handle(request, cx));
+            }
+        })
+        .detach();
 
-            app::handle(request, cx);
-            cx.activate(true);
-        });
+        app::handle(request, cx);
+        cx.activate(true);
+    });
 
     Ok(())
 }

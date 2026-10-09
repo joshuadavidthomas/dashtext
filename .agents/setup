@@ -6,15 +6,10 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-echo "==> Checking native desktop dependencies"
-# GPUI's native dependencies, plus grim and wtype for screenshots and key
-# presses when driving the app on the orb Desktop.
-packages=(
-    build-essential ca-certificates clang cmake pkg-config
-    libfontconfig-dev libfreetype-dev libvulkan1 libwayland-dev
-    libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev mesa-vulkan-drivers
-    grim wtype
-)
+echo "==> Checking system packages"
+# Everything else comes from Nix. The Vulkan driver has to be the system's: it
+# matches the machine, not the project. xz-utils is for the Nix installer.
+packages=(ca-certificates curl mesa-vulkan-drivers xz-utils)
 missing=()
 for package in "${packages[@]}"; do
     if [[ $(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true) != "install ok installed" ]]; then
@@ -26,36 +21,58 @@ if ((${#missing[@]})); then
     sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"
 fi
 
-if ! command -v mise >/dev/null 2>&1; then
-    echo "==> Installing mise"
-    mkdir -p "$HOME/.local/bin"
-    curl --proto '=https' --tlsv1.2 -LsSf https://mise.run | MISE_INSTALL_PATH="$HOME/.local/bin/mise" sh
+# Single-user: a daemon would be stopped when the orb is snapshotted.
+if [[ ! -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]]; then
+    echo "==> Installing Nix"
+    curl --proto '=https' --tlsv1.2 -sSfL https://nixos.org/nix/install | sh -s -- --no-daemon --yes
 fi
-
-echo "==> Installing pinned development tools"
-mise trust "$repo_root/mise.toml"
-mise install
-mise -C tools/rustfmt install rust
-
-# rustup updates this file during installation; load it for the remainder of
-# this non-interactive setup process without modifying shell profiles.
 # shellcheck source=/dev/null
-source "$HOME/.cargo/env"
+source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
-# Orb login shells prefer ~/.local/bin, and Cargo searches CARGO_HOME/bin for
-# subcommands. Keep project-selected tools authoritative in both locations.
-cargo_home="${CARGO_HOME:-$HOME/.cargo}"
-mkdir -p "$HOME/.local/bin" "$cargo_home/bin"
-for tool in cargo-hawk just prek zizmor; do
-    ln -sfn "$(mise which "$tool")" "$HOME/.local/bin/$tool"
+mkdir -p "$HOME/.config/nix"
+cat >"$HOME/.config/nix/nix.conf" <<'EOF'
+experimental-features = nix-command flakes
+EOF
+
+echo "==> Installing devenv, direnv and the Desktop tools"
+# grim and wtype take screenshots and send key presses on the orb Desktop.
+for tool in devenv direnv grim wtype; do
+    command -v "$tool" >/dev/null 2>&1 || nix profile add "nixpkgs#$tool"
 done
-ln -sfn "$(mise which cargo-hawk)" "$cargo_home/bin/cargo-hawk"
+
+echo "==> Building the development environment"
+direnv allow "$repo_root"
+devenv shell -- true
+
+# Load the environment in every login shell (agent commands, orb services) and
+# interactive shell. The orb holds only this repository, so login shells load it
+# whatever their directory; interactive shells follow `cd` through direnv's hook.
+hook='# dashtext devenv (.agents/setup)'
+# A login bash reads only the first of these that exists; the Nix installer
+# wrote to the same one.
+for profile in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do
+    [[ -e $profile ]] && break
+done
+for rc in "$profile" "$HOME/.bashrc"; do
+    touch "$rc"
+    # Replace the line from an earlier run.
+    sed -i "\\|^${hook}\$|,+1d" "$rc"
+    if [[ $rc == "$profile" ]]; then
+        # /etc/profile resets PATH, so load from scratch even if a parent had the
+        # environment: direnv would otherwise see it as loaded and change nothing.
+        line="eval \"\$(cd '$repo_root' && env -u DIRENV_DIFF -u DIRENV_DIR -u DIRENV_FILE -u DIRENV_WATCHES DIRENV_LOG_FORMAT= direnv export bash 2>/dev/null)\""
+    else
+        # shellcheck disable=SC2016 # expanded by the shell that reads the rc file
+        line='eval "$(direnv hook bash)"'
+    fi
+    printf '%s\n%s\n' "$hook" "$line" >>"$rc"
+done
 
 echo "==> Fetching locked Cargo dependencies for this orb's target"
-host=$(rustc -vV | sed -n 's/^host: //p')
-cargo fetch --manifest-path Cargo.toml --locked --target "$host"
+# shellcheck disable=SC2016 # expanded inside the devenv shell
+devenv shell -- bash -c 'cargo fetch --manifest-path Cargo.toml --locked --target "$(rustc -vV | sed -n "s/^host: //p")"'
 
 echo "==> Installing pre-commit hooks and their environments"
-prek install --prepare-hooks
+devenv shell -- prek install --prepare-hooks
 
 echo "==> Ready"
