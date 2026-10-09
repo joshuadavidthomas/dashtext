@@ -1,7 +1,9 @@
 use std::path::Path;
 use std::time::Duration;
+use std::time::Instant;
 
 use rusqlite::Connection;
+use rusqlite::ErrorCode;
 use rusqlite::OptionalExtension as _;
 use rusqlite::Row;
 use rusqlite::TransactionBehavior;
@@ -112,7 +114,7 @@ impl Store {
         // Before anything that takes a lock: another process (the app, or
         // `dashtext new`) may be creating or migrating the same library.
         conn.busy_timeout(BUSY_TIMEOUT)?;
-        conn.pragma_update(None, "journal_mode", "WAL")?;
+        enable_wal(&conn)?;
         conn.pragma_update(None, "synchronous", "NORMAL")?;
         Self::init(conn)
     }
@@ -407,6 +409,23 @@ fn workspace_from_row(row: &Row<'_>) -> rusqlite::Result<Result<Workspace>> {
         let view: WorkspaceView = serde_json::from_str(&view).unwrap_or_default();
         Ok(Workspace::from_parts(id, name, view))
     })())
+}
+
+/// Switches `conn` to write-ahead logging. Changing the journal mode needs an exclusive lock,
+/// and SQLite reports `SQLITE_BUSY` at once instead of waiting in the busy handler, so this
+/// retries while another process opens the same library.
+fn enable_wal(conn: &Connection) -> Result<()> {
+    let deadline = Instant::now() + BUSY_TIMEOUT;
+    loop {
+        match conn.pragma_update(None, "journal_mode", "WAL") {
+            Err(rusqlite::Error::SqliteFailure(error, _))
+                if error.code == ErrorCode::DatabaseBusy && Instant::now() < deadline =>
+            {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            result => return Ok(result?),
+        }
+    }
 }
 
 #[cfg(test)]
