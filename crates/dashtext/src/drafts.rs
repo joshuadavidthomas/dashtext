@@ -13,12 +13,14 @@ use dashtext_core::Workspace;
 use gpui_kit::Action;
 use gpui_kit::AppContext as _;
 use gpui_kit::Context;
+use gpui_kit::Div;
 use gpui_kit::Entity;
 use gpui_kit::FocusHandle;
 use gpui_kit::Focusable;
 use gpui_kit::FontWeight;
 use gpui_kit::InteractiveElement as _;
 use gpui_kit::IntoElement;
+use gpui_kit::MouseButton;
 use gpui_kit::ParentElement as _;
 use gpui_kit::Render;
 use gpui_kit::SharedString;
@@ -556,9 +558,11 @@ impl DraftsWindow {
                 .on_click(cx.listener(move |this, _, window, cx| this.set_scope(scope, window, cx)))
         });
 
-        Sidebar::new("scopes")
+        let sidebar = Sidebar::new("scopes")
             .collapsible(false)
             .w_56()
+            // Room for the traffic lights, level with the pane headers.
+            .when(cfg!(target_os = "macos"), |this| this.header(div().h_9()))
             .child(
                 SidebarGroup::new(self.workspace.name().to_owned())
                     .child(SidebarMenu::new().children(items)),
@@ -576,7 +580,23 @@ impl DraftsWindow {
                             window.dispatch_action(commands::QuickCapture.boxed_clone(), cx);
                         }),
                 ),
-            )
+            );
+
+        div()
+            .relative()
+            .h_full()
+            .child(sidebar)
+            .when(cfg!(target_os = "macos"), |this| {
+                this.child(
+                    div()
+                        .absolute()
+                        .top_0()
+                        .left_0()
+                        .w_full()
+                        .h_12()
+                        .map(title_bar_area),
+                )
+            })
     }
 
     fn render_list_pane(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -593,6 +613,7 @@ impl DraftsWindow {
                     .gap_2()
                     .border_b_1()
                     .border_color(cx.theme().border)
+                    .map(title_bar_area)
                     .child(
                         div()
                             .text_lg()
@@ -664,6 +685,7 @@ impl DraftsWindow {
             .gap_1()
             .border_b_1()
             .border_color(cx.theme().border)
+            .map(title_bar_area)
             .child(
                 div()
                     .flex_1()
@@ -856,23 +878,15 @@ impl Render for DraftsWindow {
             .on_action(
                 cx.listener(|this, _: &commands::CloseWindow, window, cx| this.close(window, cx)),
             )
-            .child(
-                TitleBar::new()
-                    .on_close_window(cx.listener(|this, _, window, cx| this.close(window, cx)))
-                    .map(|this| {
-                        // macOS shows the menus in the system menu bar.
-                        if cfg!(target_os = "macos") {
-                            this.child(
-                                div()
-                                    .text_sm()
-                                    .font_weight(FontWeight::MEDIUM)
-                                    .child("Dashtext"),
-                            )
-                        } else {
-                            this.child(self.app_menu_bar.clone())
-                        }
-                    }),
-            )
+            // macOS has no title bar row: the traffic lights sit in the
+            // sidebar and the menus in the system menu bar.
+            .when(!cfg!(target_os = "macos"), |this| {
+                this.child(
+                    TitleBar::new()
+                        .on_close_window(cx.listener(|this, _, window, cx| this.close(window, cx)))
+                        .child(self.app_menu_bar.clone()),
+                )
+            })
             .child(
                 h_flex()
                     .flex_1()
@@ -906,6 +920,26 @@ impl Render for DraftsWindow {
                     ),
             )
     }
+}
+
+/// Lets a header stand in for the title bar on macOS: dragging its empty
+/// space moves the window and double-clicking it zooms (or whatever the
+/// system setting says). Buttons inside prevent default on mouse down, so
+/// they keep their clicks.
+fn title_bar_area(area: Div) -> Div {
+    if !cfg!(target_os = "macos") {
+        return area;
+    }
+    area.on_mouse_down(MouseButton::Left, |event, window, _| {
+        if window.default_prevented() {
+            return;
+        }
+        if event.click_count == 2 {
+            window.titlebar_double_click();
+        } else {
+            window.start_window_move();
+        }
+    })
 }
 
 fn load_drafts(library: &Entity<Library>, workspace: &Workspace, cx: &gpui_kit::App) -> Vec<Draft> {

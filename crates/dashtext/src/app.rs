@@ -7,6 +7,7 @@ use gpui_kit::Focusable as _;
 use gpui_kit::Global;
 use gpui_kit::Pixels;
 use gpui_kit::Size;
+use gpui_kit::TitlebarOptions;
 use gpui_kit::WeakEntity;
 use gpui_kit::Window;
 use gpui_kit::WindowBackgroundAppearance;
@@ -19,6 +20,7 @@ use gpui_kit::base::Root;
 use gpui_kit::component::TitleBar;
 use gpui_kit::component::WindowExt as _;
 use gpui_kit::component::notification::Notification;
+use gpui_kit::point;
 use gpui_kit::px;
 use gpui_kit::size;
 
@@ -87,6 +89,12 @@ pub fn open_drafts(cx: &mut App) {
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(bounds)),
         window_min_size: Some(size(px(640.), px(400.))),
+        // On macOS the traffic lights sit at the top of the sidebar, centered
+        // in the 48px band of the pane headers.
+        titlebar: Some(TitlebarOptions {
+            traffic_light_position: Some(point(px(18.), px(16.))),
+            ..TitleBar::title_bar_options()
+        }),
         ..window_options()
     };
     match gpui_kit::open_window(options, cx, |window, cx| {
